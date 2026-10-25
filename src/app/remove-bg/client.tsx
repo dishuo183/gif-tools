@@ -119,8 +119,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   };
 
   const go = () =>
-    run("Removing background", async () => {
-      if (!file) throw new Error("Choose a GIF or image first.");
+    run("正在去除背景", async () => {
+      if (!file) throw new Error("请先选择一个 GIF 或图片。");
       const filters = `colorkey=0x${key.slice(1)}:${similarity.toFixed(3)}:${blend.toFixed(3)}`;
       const ext = outputExt(file);
       const srcExt = file.name.split(".").pop()?.toLowerCase() || "bin";
@@ -137,7 +137,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         { onProgress: (r) => setProgress(r) },
       ).catch((err: unknown) => {
         throw new Error(
-          `ffmpeg could not key this file (${err instanceof Error ? err.message : String(err)}). Try a different input format.`,
+          `ffmpeg 无法对此文件抠像（${err instanceof Error ? err.message : String(err)}）。请换一种输入格式再试。`,
         );
       });
       publish({
@@ -153,14 +153,14 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex items-end gap-2">
           <div className="flex-1">
-            <ColorField id="rb-color" label="colour to remove" value={key} onChange={setColor} />
+            <ColorField id="rb-color" label="要去除的颜色" value={key} onChange={setColor} />
           </div>
           <Button
             variant={picking ? "default" : "outline"}
             size="icon"
             aria-pressed={picking}
-            aria-label="Pick the colour from the preview"
-            title="Pick from the preview"
+            aria-label="从预览中取色"
+            title="从预览取色"
             disabled={!frame}
             onClick={() => setPicking((v) => !v)}
           >
@@ -169,12 +169,12 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         </div>
         <p className="self-end text-label text-muted-foreground">
           {color
-            ? "Chosen from the image."
-            : "Auto: the top-left pixel. Click the preview to pick another."}
+            ? "已从图片中取色。"
+            : "自动：取左上角像素的颜色。点击预览可另选颜色。"}
         </p>
         <Range
           id="rb-tolerance"
-          label="tolerance"
+          label="容差"
           suffix="%"
           min={1}
           max={100}
@@ -184,7 +184,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
         <Range
           id="rb-feather"
-          label="feather"
+          label="羽化"
           suffix="%"
           min={0}
           max={50}
@@ -197,7 +197,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       {frame ? (
         <div>
           <span className="text-label text-muted-foreground tracking-[1.5px] uppercase block mb-1">
-            live preview
+            实时预览
           </span>
           <div className="border-border flex justify-center border p-3">
             <canvas
@@ -207,11 +207,11 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
               onClick={pick}
               className={`checkerboard border-border block max-w-full border ${picking ? "cursor-crosshair ring-2 ring-primary" : "cursor-crosshair"}`}
               role="img"
-              aria-label="First frame with the chosen colour removed"
+              aria-label="已去除所选颜色的首帧"
             />
           </div>
           <p className="text-label text-muted-foreground mt-1">
-            First frame only. Click anywhere on it to pick the colour to remove.
+            仅显示首帧。在画面上点击任意位置即可取色。
           </p>
         </div>
       ) : file && failed ? (
@@ -227,7 +227,7 @@ export default function RemoveBgTool() {
       tool={tool}
       accept="image/gif,image/png,image/jpeg,image/webp,video/*"
       defaultName="transparent"
-      hint="Pick the colour to knock out, widen the tolerance until the whole background goes, and add a little feather so edges don't look cut with scissors. GIFs stay animated; stills come back as PNG."
+      hint="选取要去除的颜色，逐步提高容差直到背景完全消失，再加一点羽化，让边缘不至于像剪刀剪出来的。GIF 会保留动画；静态图片输出为 PNG。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

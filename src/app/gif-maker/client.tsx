@@ -96,7 +96,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const [frames, setFrames] = React.useState<Frame[]>([]);
   const [delay, setDelay] = React.useState(120);
   const [loop, setLoop] = React.useState(0);
-  const [width, setWidth] = React.useState(480);
+  const [width, setWidth] = React.useState(1340);
   const [fit, setFit] = React.useState<Fit>("contain");
   const [bg, setBg] = React.useState("#000000");
   const [dragging, setDragging] = React.useState(false);
@@ -109,7 +109,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     async (list: FileList | File[] | null) => {
       const files = Array.from(list ?? []).filter((f) => f.type.startsWith("image/"));
       if (!files.length) {
-        setError("Those files aren't images. Pick PNG, JPEG, WebP or GIF files.");
+        setError("这些文件不是图片。请选择 PNG、JPEG、WebP 或 GIF 文件。");
         return;
       }
       setError(null);
@@ -132,7 +132,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         }
       }
       if (added.length) setFrames((prev) => [...prev, ...added]);
-      if (failed.length) setError(`Could not read ${failed.join(", ")}.`);
+      if (failed.length) setError(`无法读取 ${failed.join("、")}。`);
     },
     [setError],
   );
@@ -195,8 +195,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     });
 
   const go = () =>
-    run("Building GIF", async () => {
-      if (!frames.length) throw new Error("Add at least one image first.");
+    run("正在生成 GIF", async () => {
+      if (!frames.length) throw new Error("请先添加至少一张图片。");
       const { w, h } = outputSize(frames, width);
       const ms = clamp(Math.round(delay), 20, 5000);
 
@@ -214,7 +214,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       publish({
         data,
         ext: "gif",
-        note: `${frames.length} frames · ${ms}ms · ${w}px · ${fit}`,
+        note: `${frames.length} 帧 · ${ms}ms · ${w}px · ${fit}`,
       });
     });
 
@@ -246,33 +246,32 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           accept="image/png,image/jpeg,image/webp,image/gif"
           className="sr-only"
           id="gif-maker-files"
-          aria-label="Choose images to turn into GIF frames"
+          aria-label="选择要制作成 GIF 帧的图片"
           onChange={(e) => {
             void addFiles(e.target.files);
             e.target.value = "";
           }}
         />
         <Upload className="mx-auto mb-2 size-5 text-muted-foreground" aria-hidden="true" />
-        <p className="text-ui text-foreground mb-1">Drop several images, or a folder, here</p>
+        <p className="text-ui text-foreground mb-1">把多张图片或一个文件夹拖到这里</p>
         <p className="text-label text-muted-foreground mb-3">
-          they become frames in the order you add them — paste works too — nothing leaves your
-          device
+          它们会按添加顺序成为帧，也可以直接粘贴，文件不会离开你的设备
         </p>
         <div className="flex flex-wrap justify-center gap-2">
           <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
-            Choose images
+            选择图片
           </Button>
-          <HistoryPicker label="Add from history" onPick={(f) => void addFiles([f])} />
+          <HistoryPicker label="从历史记录添加" onPick={(f) => void addFiles([f])} />
         </div>
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-1">
           <Label className="mb-0" id="gif-maker-frames-label">
-            frames
+            帧
           </Label>
           <span className="text-label text-muted-foreground tabular-nums" aria-live="polite">
-            {frames.length} added
+            已添加 {frames.length} 帧
           </span>
         </div>
         {frames.length ? (
@@ -328,7 +327,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
                     variant="outline"
                     size="icon"
                     className="size-6 bg-background/90"
-                    aria-label={`Move frame ${i + 1} earlier`}
+                    aria-label={`将第 ${i + 1} 帧前移`}
                     disabled={i === 0}
                     onClick={() => move(i, -1)}
                   >
@@ -338,7 +337,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
                     variant="outline"
                     size="icon"
                     className="size-6 bg-background/90"
-                    aria-label={`Move frame ${i + 1} later`}
+                    aria-label={`将第 ${i + 1} 帧后移`}
                     disabled={i === frames.length - 1}
                     onClick={() => move(i, 1)}
                   >
@@ -348,7 +347,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
                     variant="outline"
                     size="icon"
                     className="size-6 bg-background/90"
-                    aria-label={`Delete frame ${i + 1}`}
+                    aria-label={`删除第 ${i + 1} 帧`}
                     onClick={() => remove(i)}
                   >
                     <Trash2 aria-hidden="true" />
@@ -358,13 +357,13 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             ))}
           </ul>
         ) : (
-          <p className="text-ui text-muted-foreground">No frames yet.</p>
+          <p className="text-ui text-muted-foreground">还没有帧。</p>
         )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="gm-delay">frame delay (ms)</Label>
+          <Label htmlFor="gm-delay">帧延迟（ms）</Label>
           <Input
             id="gm-delay"
             type="number"
@@ -376,7 +375,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         </div>
         <div>
-          <Label htmlFor="gm-loop">loop count (0 = forever)</Label>
+          <Label htmlFor="gm-loop">循环次数（0 = 无限）</Label>
           <Input
             id="gm-loop"
             type="number"
@@ -388,7 +387,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         </div>
         <div>
-          <Label htmlFor="gm-width">output width (px)</Label>
+          <Label htmlFor="gm-width">输出宽度（px）</Label>
           <Input
             id="gm-width"
             type="number"
@@ -400,25 +399,25 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             aria-describedby="gm-width-hint"
           />
           <p id="gm-width-hint" className="text-label text-muted-foreground mt-1">
-            Height follows the first frame&apos;s aspect ratio.
+            高度按第一帧的比例自动计算。
           </p>
         </div>
         <div>
-          <Label htmlFor="gm-fit">fit mode</Label>
+          <Label htmlFor="gm-fit">适配方式</Label>
           <Select id="gm-fit" value={fit} onChange={(e) => setFit(e.target.value as Fit)}>
-            <option value="contain">contain — whole image, padded</option>
-            <option value="cover">cover — fill the frame, crop edges</option>
-            <option value="stretch">stretch — distort to fit</option>
+            <option value="contain">完整显示 —— 留边填充</option>
+            <option value="cover">填满画面 —— 裁剪边缘</option>
+            <option value="stretch">拉伸变形 —— 适配目标尺寸</option>
           </Select>
         </div>
       </div>
 
       {fit === "contain" ? (
-        <ColorField id="gm-bg" label="background colour" value={bg} onChange={setBg} clearable />
+        <ColorField id="gm-bg" label="背景颜色" value={bg} onChange={setBg} clearable />
       ) : null}
 
       <div>
-        <Label>live preview</Label>
+        <Label>实时预览</Label>
         <div className="checkerboard flex min-h-32 items-center justify-center border border-border p-3">
           {frames.length ? (
             <canvas
@@ -426,21 +425,19 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
               width={outW}
               height={outH}
               role="img"
-              aria-label={`Looping preview of ${frames.length} frame${
-                frames.length === 1 ? "" : "s"
-              } at ${outW} by ${outH} pixels`}
+              aria-label={`循环预览：共 ${frames.length} 帧，${outW} × ${outH} 像素`}
               className="max-h-60 max-w-full"
             />
           ) : (
-            <p className="text-ui text-muted-foreground">Add images to see them play.</p>
+            <p className="text-ui text-muted-foreground">添加图片后即可预览。</p>
           )}
         </div>
         {frames.length ? (
           <p className="text-label text-muted-foreground tabular-nums mt-1">
-            {`${outW} × ${outH} · ${frames.length} frame${frames.length === 1 ? "" : "s"} · ${Math.max(
+            {`${outW} × ${outH} · ${frames.length} 帧 · 每帧 ${Math.max(
               20,
               Math.round(delay),
-            )}ms each · ${(Math.max(20, Math.round(delay)) * frames.length) / 1000}s total`}
+            )}ms · 共 ${(Math.max(20, Math.round(delay)) * frames.length) / 1000} s`}
           </p>
         ) : null}
       </div>
@@ -454,7 +451,7 @@ export default function GifMakerTool() {
       tool={tool}
       requiresFile={false}
       defaultName="animation"
-      hint="Add images, put them in the order you want, then set the delay. Every frame is drawn at the same size using the fit mode you pick."
+      hint="添加图片，按想要的顺序排列，然后设置帧延迟。每一帧都会用你选择的适配方式绘制成相同尺寸。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

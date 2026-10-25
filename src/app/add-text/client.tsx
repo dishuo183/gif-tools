@@ -6,6 +6,7 @@ import { encodeGif } from "@/lib/engines/gif-encode";
 import { MAX_FRAMES, useFrames } from "@/lib/preview";
 import { FACES, faceOptions, useFace, type FaceId } from "@/lib/fonts";
 import { getTool } from "@/lib/tools";
+import { wrapText } from "@/lib/text-layout";
 
 const tool = getTool("add-text");
 
@@ -25,37 +26,18 @@ interface Style {
 
 const font = (size: number, face: FaceId) => `bold ${size}px ${FACES[face].family}`;
 
-/** Greedy word wrap; a single over-long word is left on its own line. */
-function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const lines: string[] = [];
-  for (const paragraph of text.split("\n")) {
-    let line = "";
-    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
-      const next = line ? `${line} ${word}` : word;
-      if (line && ctx.measureText(next).width > maxWidth) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = next;
-      }
-    }
-    if (line) lines.push(line);
-  }
-  return lines;
-}
-
 /** Draw one frame plus its captions. Returns the canvas it drew into. */
 function compose(canvas: HTMLCanvasElement, img: HTMLImageElement, s: Style) {
   const w = img.naturalWidth || 1;
   const h = img.naturalHeight || 1;
   const measure = canvas.getContext("2d", { willReadFrequently: true });
-  if (!measure) throw new Error("Your browser would not give us a 2D canvas context.");
+  if (!measure) throw new Error("浏览器未能提供 2D 画布上下文。");
   measure.font = font(s.fontSize, s.face);
 
   const pad = Math.round(s.fontSize * 0.35);
   const lineHeight = s.fontSize * 1.15;
-  const topLines = wrap(measure, s.top, w - pad * 2);
-  const bottomLines = wrap(measure, s.bottom, w - pad * 2);
+  const topLines = wrapText(measure, s.top, w - pad * 2);
+  const bottomLines = wrapText(measure, s.bottom, w - pad * 2);
   const barHeight = (n: number) =>
     s.mode === "bar" && n ? Math.round(n * lineHeight + pad * 2) : 0;
   const topBar = barHeight(topLines.length);
@@ -64,7 +46,7 @@ function compose(canvas: HTMLCanvasElement, img: HTMLImageElement, s: Style) {
   canvas.width = w;
   canvas.height = h + topBar + bottomBar;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) throw new Error("Your browser would not give us a 2D canvas context.");
+  if (!ctx) throw new Error("浏览器未能提供 2D 画布上下文。");
 
   if (s.mode === "bar") {
     ctx.fillStyle = s.barColor;
@@ -104,8 +86,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const [frameDelay, setFrameDelay] = React.useState(100);
   React.useEffect(() => setFrameDelay(delay), [delay]);
   const [style, setStyle] = React.useState<Style>({
-    top: "one does not simply",
-    bottom: "make a meme",
+    top: "在下不才",
+    bottom: "只想做个梗图",
     fontSize: 36,
     color: "#ffffff",
     outline: "#000000",
@@ -118,8 +100,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     setStyle((prev) => ({ ...prev, [k]: v }));
 
   const go = () =>
-    run("Adding text", async () => {
-      if (!frames.length) throw new Error("Choose a GIF or image first.");
+    run("正在添加文字", async () => {
+      if (!frames.length) throw new Error("请先选择一个 GIF 或图片。");
       const canvas = document.createElement("canvas");
       const images: ImageData[] = [];
       frames.forEach((img, i) => {
@@ -142,11 +124,11 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="at-top">top text</Label>
+          <Label htmlFor="at-top">顶部文字</Label>
           <Input id="at-top" value={style.top} onChange={(e) => set("top", e.target.value)} />
         </div>
         <div>
-          <Label htmlFor="at-bottom">bottom text</Label>
+          <Label htmlFor="at-bottom">底部文字</Label>
           <Input
             id="at-bottom"
             value={style.bottom}
@@ -154,18 +136,18 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         </div>
         <div>
-          <Label htmlFor="at-mode">placement</Label>
+          <Label htmlFor="at-mode">位置</Label>
           <Select
             id="at-mode"
             value={style.mode}
             onChange={(e) => set("mode", e.target.value as Mode)}
           >
-            <option value="overlay">overlay — text sits on the image</option>
-            <option value="bar">caption bar — solid bar above/below</option>
+            <option value="overlay">叠加 — 文字直接压在画面上</option>
+            <option value="bar">字幕条 — 在画面上方或下方加实色条</option>
           </Select>
         </div>
         <div>
-          <Label htmlFor="at-font">typeface</Label>
+          <Label htmlFor="at-font">字体</Label>
           <Select
             id="at-font"
             value={style.face}
@@ -175,7 +157,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           </Select>
         </div>
         <Range
-          label="font size"
+          label="字号"
           suffix="px"
           min={8}
           max={160}
@@ -185,18 +167,18 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
         <ColorField
           id="at-color"
-          label="text colour"
+          label="文字颜色"
           value={style.color}
           onChange={(v) => set("color", v)}
         />
         <ColorField
           id="at-outline"
-          label="outline colour"
+          label="描边颜色"
           value={style.outline}
           onChange={(v) => set("outline", v)}
         />
         <Range
-          label="outline width"
+          label="描边宽度"
           suffix="px"
           min={0}
           max={12}
@@ -207,7 +189,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         {style.mode === "bar" ? (
           <ColorField
             id="at-bar"
-            label="caption bar colour"
+            label="字幕条颜色"
             value={style.barColor}
             onChange={(v) => set("barColor", v)}
           />
@@ -216,7 +198,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       {truncated ? (
         <p role="status" className="text-ui text-[hsl(var(--smui-yellow))]">
-          That file has more than {MAX_FRAMES} frames; only the first {MAX_FRAMES} are captioned.
+          该文件的帧数超过 {MAX_FRAMES} 帧，仅对前 {MAX_FRAMES} 帧添加文字。
         </p>
       ) : null}
     </>
@@ -229,7 +211,7 @@ export default function AddTextTool() {
       tool={tool}
       accept="image/gif,image/png,image/jpeg,image/webp"
       defaultName="captioned"
-      hint="Frames are decoded with ffmpeg, captioned on a canvas and re-encoded as a GIF. The preview updates as you type."
+      hint="帧由 ffmpeg 解码，在画布上添加文字后重新编码为 GIF。预览会随输入实时更新。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

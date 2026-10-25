@@ -25,27 +25,27 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   // gifsicle only gets --colors when it is below 256, and no --scale at all.
   const lossyWords =
     lossy <= 40
-      ? "barely visible"
+      ? "几乎看不出"
       : lossy <= 80
-        ? "slight noise"
+        ? "轻微噪点"
         : lossy <= 140
-          ? "visible noise"
-          : "heavy artifacts";
+          ? "明显噪点"
+          : "严重伪影";
   const readout: [string, string][] = [
-    ["size", dims ? `${dims.w} × ${dims.h} px` : !file ? "—" : failed ? "unknown" : "reading…"],
-    ["format", ".gif"],
-    ["colors", colors < 256 ? `reduced to ${colors}` : "palette unchanged"],
-    ["lossy", useLossy ? `${lossy} — ${lossyWords}` : "off"],
+    ["尺寸", dims ? `${dims.w} × ${dims.h} px` : !file ? "—" : failed ? "未知" : "读取中…"],
+    ["格式", ".gif"],
+    ["颜色数", colors < 256 ? `减少到 ${colors}` : "调色板不变"],
+    ["有损", useLossy ? `${lossy} — ${lossyWords}` : "关闭"],
     [
-      "effort",
-      level === 1 ? "changed areas only" : level === 2 ? "+ transparency reuse" : "every method",
+      "力度",
+      level === 1 ? "仅存储变化区域" : level === 2 ? "+ 复用透明" : "所有方法",
     ],
   ];
 
   const go = () =>
-    run("Optimizing", async () => {
+    run("正在优化", async () => {
       setSaving(null); // a failed run must not leave the last file's result on screen
-      if (!file) throw new Error("Choose a GIF first.");
+      if (!file) throw new Error("请先选择一个 GIF。");
       setProgress(0.3);
       const out = await optimizeGif(file, {
         level,
@@ -55,7 +55,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       setProgress(1);
       const pct = Math.round((1 - out.length / file.size) * 100);
       setSaving({
-        text: `${formatBytes(file.size)} → ${formatBytes(out.length)} (${pct >= 0 ? `${pct}% smaller` : `${-pct}% larger`})`,
+        text: `${formatBytes(file.size)} → ${formatBytes(out.length)}（${pct >= 0 ? `${pct}% 缩小` : `${-pct}% 增大`}）`,
         pct,
       });
       publish({
@@ -70,19 +70,19 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="opt-level">optimization level</Label>
+          <Label htmlFor="opt-level">优化级别</Label>
           <Select
             id="opt-level"
             value={level}
             onChange={(e) => setLevel(Number(e.target.value) as 1 | 2 | 3)}
           >
-            <option value={1}>1 — store only changed areas</option>
-            <option value={2}>2 — also reuse transparency</option>
-            <option value={3}>3 — try everything (slowest)</option>
+            <option value={1}>1 — 仅存储变化区域</option>
+            <option value={2}>2 — 同时复用透明区域</option>
+            <option value={3}>3 — 尝试所有方法（最慢）</option>
           </Select>
         </div>
         <Range
-          label="colors"
+          label="颜色数"
           min={2}
           max={256}
           step={1}
@@ -93,13 +93,13 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div className="grid gap-3">
         <Checkbox
-          label="Lossy compression (much smaller, slightly noisier)"
+          label="有损压缩（文件更小，噪点略多）"
           checked={useLossy}
           onChange={(e) => setUseLossy(e.target.checked)}
         />
         {useLossy ? (
           <Range
-            label="lossy amount"
+            label="有损强度"
             min={10}
             max={200}
             step={5}
@@ -131,7 +131,7 @@ export default function OptimizeTool() {
       tool={tool}
       accept="image/gif"
       defaultName="optimized"
-      hint="gifsicle rewrites the GIF so frames only store what changed. Lossy mode trades a little quality for a much smaller file."
+      hint="gifsicle 会重写 GIF，让每帧只存储发生变化的部分。有损模式用少量画质换取更小的文件。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

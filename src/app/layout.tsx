@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme";
 import { SiteFooter, SiteNav } from "@/components/site-nav";
@@ -7,9 +6,11 @@ import { CarryProvider, ToolStrip } from "@/components/tool-strip";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+// Self-hosted variable font (latin subset, wght 100-800). Fetching this from
+// Google Fonts at build time made offline builds impossible; the file is 40KB.
+const mono = localFont({
+  src: "./jetbrains-mono-latin.woff2",
+  weight: "100 800",
   variable: "--font-jetbrains",
   display: "swap",
 });
@@ -46,14 +47,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${mono.variable} ${vcr.variable}`}>
+    <html lang="zh-CN" suppressHydrationWarning className={`${mono.variable} ${vcr.variable}`}>
       <body>
         <ThemeProvider>
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:m-2 focus:border focus:border-primary focus:bg-card focus:px-3 focus:py-2 focus:text-ui"
           >
-            Skip to content
+            跳到主要内容
           </a>
           <SiteNav />
           <CarryProvider>

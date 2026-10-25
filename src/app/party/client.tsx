@@ -132,8 +132,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   };
 
   const go = () =>
-    run("Partying", async () => {
-      if (!img) throw new Error("Choose an image first.");
+    run("正在变色", async () => {
+      if (!img) throw new Error("请先选择一张图片。");
       setProgress(0.4);
       const data = renderFrames({ width: size, height: size }, count, (ctx, _t, i) =>
         drawFrame(ctx, frameAt(anim, i * delay), i % frames, settings),
@@ -152,48 +152,48 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="party-size">output size</Label>
+          <Label htmlFor="party-size">输出尺寸</Label>
           <Select id="party-size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
             <option value={32}>32 × 32</option>
             <option value={64}>64 × 64</option>
-            <option value={128}>128 × 128 — Slack emoji</option>
+            <option value={128}>128 × 128 — Slack 表情</option>
             <option value={256}>256 × 256</option>
           </Select>
         </div>
         <div>
-          <Label htmlFor="party-palette">palette</Label>
+          <Label htmlFor="party-palette">调色板</Label>
           <Select
             id="party-palette"
             value={palette}
             onChange={(e) => setPalette(e.target.value as Palette)}
           >
-            <option value="parrot">Party parrot rainbow</option>
-            <option value="hsv">Full HSV sweep</option>
-            <option value="custom">Custom two-colour gradient</option>
+            <option value="parrot">派对鹦鹉彩虹</option>
+            <option value="hsv">完整 HSV 扫色</option>
+            <option value="custom">自定义双色渐变</option>
           </Select>
         </div>
       </div>
 
       {palette === "custom" ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <ColorField id="party-from" label="from colour" value={from} onChange={setFrom} />
-          <ColorField id="party-to" label="to colour" value={to} onChange={setTo} />
+          <ColorField id="party-from" label="起始颜色" value={from} onChange={setFrom} />
+          <ColorField id="party-to" label="结束颜色" value={to} onChange={setTo} />
         </div>
       ) : null}
 
       <div>
-        <Label htmlFor="party-mode">recolour mode</Label>
+        <Label htmlFor="party-mode">着色模式</Label>
         <Select id="party-mode" value={mode} onChange={(e) => setMode(e.target.value as Mode)}>
           <option value="all">
-            Whole image{palette === "hsv" ? " — hue rotate" : " — take the party colour"}
+            整张图片{palette === "hsv" ? "——色相旋转" : "——套用派对颜色"}
           </option>
-          <option value="bright">Bright areas only — keep dark line art</option>
+          <option value="bright">仅亮部——保留深色线稿</option>
         </Select>
       </div>
 
       {mode === "bright" ? (
         <Range
-          label="brightness threshold"
+          label="亮度阈值"
           suffix="%"
           min={5}
           max={95}
@@ -205,7 +205,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Range
-          label="frames"
+          label="帧数"
           min={2}
           max={24}
           step={1}
@@ -213,7 +213,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           onChange={(e) => setFrames(Number(e.target.value))}
         />
         <Range
-          label="frame delay"
+          label="帧延迟"
           suffix="ms"
           min={20}
           max={200}
@@ -223,7 +223,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
       </div>
 
-      <ColorField id="party-bg" label="background colour" value={bg} onChange={setBg} clearable />
+      <ColorField id="party-bg" label="背景颜色" value={bg} onChange={setBg} clearable />
     </>
   );
 }
@@ -234,7 +234,7 @@ export default function PartyTool() {
       tool={tool}
       accept="image/png,image/jpeg,image/webp,image/gif"
       defaultName="party"
-      hint="Every frame recolours the pixels directly, so transparency survives. Line art usually looks best with bright areas only."
+      hint="每一帧都直接给像素重新着色，所以透明区域能保留下来。线稿类图片通常选“仅亮部”效果最好。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

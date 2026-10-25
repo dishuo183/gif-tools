@@ -34,7 +34,7 @@ export async function runGifsicle(
     input: [{ file, name: inputName }],
     command,
   });
-  if (!out?.length) throw new Error("gifsicle produced no output");
+  if (!out?.length) throw new Error("gifsicle 没有产出文件");
   return new Uint8Array(await out[0].arrayBuffer());
 }
 
@@ -63,7 +63,7 @@ export async function optimizeGif(
   if (keepEveryNthFrame && keepEveryNthFrame > 1) {
     // gifsicle has no "every Nth"; select the frames explicitly via #a-b syntax
     // is awkward, so leave frame dropping to the ffmpeg-based speed tool.
-    throw new Error("frame dropping lives in the speed tool, not the optimizer");
+    throw new Error("丢帧请在「速度」工具里做，优化器不支持");
   }
   parts.push("-o", "/out/output.gif");
   return runGifsicle(file, [parts.join(" ")]);

@@ -27,36 +27,34 @@ const llms = `# ${SITE.name}
 
 > ${SITE.description}
 
-Every tool runs client-side in WebAssembly. There is no API and no upload
-endpoint: files are processed in the visitor's own browser and never sent
-anywhere. The site is a static export, so every page below is a real HTML
-document with its own metadata, and each has a Markdown mirror at the same
-path with a \`.md\` extension.
+所有工具都在浏览器里通过 WebAssembly 运行。没有 API，也没有上传接口：文件在访问者
+自己的浏览器里处理，永远不会被发送到别处。本站是静态导出，下面每一页都是带独立
+元数据的真实 HTML 文档，并且在同一路径下有一份 \`.md\` 扩展名的 Markdown 镜像。
 
-## Tools
+## 工具
 
 ${ORDER.map(
   (cat) => `### ${CATEGORIES[cat].label} — ${CATEGORIES[cat].description}
 
 ${TOOLS.filter((t) => t.category === cat)
-  .map((t) => `- [${t.name}](${SITE.url}/${t.slug}.md): ${t.description}`)
+  .map((t) => `- [${t.name}](${SITE.url}/${t.slug}.md)：${t.description}`)
   .join("\n")}`,
 ).join("\n\n")}
 
-## About
+## 关于
 
-- [Home](${SITE.url}/index.md): the full tool index.
-- [Sitemap](${SITE.url}/sitemap.md): every page on the site.
-- [AGENTS.md](${SITE.url}/AGENTS.md): how this site is built and how to work on it.
+- [首页](${SITE.url}/index.md)：完整的工具索引。
+- [站点地图](${SITE.url}/sitemap.md)：站内所有页面。
+- [AGENTS.md](${SITE.url}/AGENTS.md)：本站如何构建、如何参与开发。
 
-## Engines
+## 引擎
 
-- ffmpeg (WebAssembly) — video and animation decoding, filtering and encoding.
-- gifsicle (WebAssembly) — GIF-specific optimisation and palette reduction.
-- ImageMagick (WebAssembly) — still-image conversion and compression.
-- Canvas 2D plus gifenc — the emoji and text generators.
+- ffmpeg（WebAssembly）— 视频与动画的解码、滤镜和编码。
+- gifsicle（WebAssembly）— GIF 专用优化与调色板缩减。
+- ImageMagick（WebAssembly）— 静态图片的转换与压缩。
+- Canvas 2D 与 gifenc — 表情和文字生成器。
 
-Last updated: ${now}
+最后更新：${now}
 `;
 await write("llms.txt", llms);
 
@@ -77,33 +75,32 @@ doc_version: "1"
 
 ${t.description}
 
-## How it works
+## 工作原理
 
-This tool runs entirely in your browser using ${t.engine.join(", ")} compiled to
-WebAssembly (or the Canvas API, where listed). Your file is never uploaded — it is
-read into memory, processed locally, and offered back to you as a download.
+这个工具完全在你的浏览器里运行，使用编译为 WebAssembly 的 ${t.engine.join("、")}
+（或下面列出的 Canvas API）。文件不会被上传——它被读入内存，在本地处理，然后作为
+下载交还给你。
 
-## Using it
+## 使用方法
 
-1. Open ${SITE.url}/${t.slug}/
-2. ${t.category === "emoji" && (t.slug === "number" || t.slug === "text-emoji") ? "Enter your text and pick a style." : "Choose a file, by drag and drop or the file picker."}
-3. Adjust the settings. ${t.blurb}
-4. Set the filename and download. Names are slugified so the result can be
-   uploaded straight to Slack as a custom emoji.
+1. 打开 ${SITE.url}/${t.slug}/
+2. ${t.category === "emoji" && (t.slug === "number" || t.slug === "text-emoji") ? "输入文字并选择一种样式。" : "选择文件，可以拖进去，也可以用文件选择器。"}
+3. 调整设置。${t.blurb}
+4. 设置文件名并下载。文件名会被规范化，结果可以直接作为自定义表情上传到 Slack。
 
-Results are also saved to a per-browser history at ${SITE.url}/history/.
+结果也会保存到按浏览器隔离的历史记录里：${SITE.url}/history/。
 
-## Related
+## 相关工具
 
 ${TOOLS.filter((x) => x.category === t.category && x.slug !== t.slug)
-  .map((x) => `- [${x.name}](${SITE.url}/${x.slug}.md): ${x.blurb}`)
+  .map((x) => `- [${x.name}](${SITE.url}/${x.slug}.md)：${x.blurb}`)
   .join("\n")}
 
-## Sitemap
+## 站点地图
 
-- [Every page, grouped by section](${SITE.url}/sitemap.md)
-- [XML sitemap](${SITE.url}/sitemap.xml)
-- [Site overview for agents](${SITE.url}/llms.txt)
+- [所有页面，按分区排列](${SITE.url}/sitemap.md)
+- [XML 站点地图](${SITE.url}/sitemap.xml)
+- [给 agent 的站点概览](${SITE.url}/llms.txt)
 `,
   );
 }
@@ -123,10 +120,9 @@ doc_version: "1"
 
 ${SITE.description}
 
-There is no account, no upload and no server-side processing. Every tool below is
-a static page that loads a WebAssembly engine on demand and does the work in your
-own browser. Results are kept in a local history so you can fetch them again, and
-downloads are named so they can go straight into Slack as custom emoji.
+没有账号，没有上传，也没有服务端处理。下面每个工具都是一个静态页面，按需加载
+WebAssembly 引擎，在你自己的浏览器里完成工作。结果会保存在本地历史里，随时可以
+再取回；下载的文件名也按规则生成，可以直接作为自定义表情放进 Slack。
 
 ${ORDER.map(
   (cat) => `## ${CATEGORIES[cat].label}
@@ -134,14 +130,14 @@ ${ORDER.map(
 ${CATEGORIES[cat].description}
 
 ${TOOLS.filter((t) => t.category === cat)
-  .map((t) => `- [${t.name}](${SITE.url}/${t.slug}.md): ${t.description}`)
+  .map((t) => `- [${t.name}](${SITE.url}/${t.slug}.md)：${t.description}`)
   .join("\n")}`,
 ).join("\n\n")}
 
-## Sitemap
+## 站点地图
 
-- [Every page, grouped by section](${SITE.url}/sitemap.md)
-- [XML sitemap](${SITE.url}/sitemap.xml)
+- [所有页面，按分区排列](${SITE.url}/sitemap.md)
+- [XML 站点地图](${SITE.url}/sitemap.xml)
 `,
 );
 
@@ -149,19 +145,19 @@ ${TOOLS.filter((t) => t.category === cat)
 await write(
   "sitemap.md",
   `---
-title: "Sitemap — ${SITE.name}"
-description: "Every page on ${SITE.name}, grouped by section."
+title: "站点地图 — ${SITE.name}"
+description: "${SITE.name} 的所有页面，按分区排列。"
 url: "${SITE.url}/sitemap.md"
 last_updated: "${now}"
 doc_version: "1"
 ---
 
-# Sitemap
+# 站点地图
 
-## Site
+## 站点
 
-- [Home](${SITE.url}/): the tool index.
-- [History](${SITE.url}/history/): your local results (not indexed; per-browser).
+- [首页](${SITE.url}/)：工具索引。
+- [历史记录](${SITE.url}/history/)：你本地的结果（不索引，按浏览器隔离）。
 
 ${ORDER.map(
   (cat) => `## ${CATEGORIES[cat].label}
@@ -169,7 +165,7 @@ ${ORDER.map(
 ${TOOLS.filter((t) => t.category === cat)
   .map(
     (t) =>
-      `- [${t.name}](${SITE.url}/${t.slug}/) ([markdown](${SITE.url}/${t.slug}.md)): ${t.blurb}`,
+      `- [${t.name}](${SITE.url}/${t.slug}/)（[markdown](${SITE.url}/${t.slug}.md)）：${t.blurb}`,
   )
   .join("\n")}`,
 ).join("\n\n")}
@@ -180,58 +176,56 @@ ${TOOLS.filter((t) => t.category === cat)
 await write(
   "glossary.md",
   `---
-title: "GIF glossary — ${SITE.name}"
-description: "Plain definitions of the terms these tools use."
+title: "GIF 术语表 — ${SITE.name}"
+description: "这些工具用到的术语的通俗解释。"
 url: "${SITE.url}/glossary.md"
 last_updated: "${now}"
 doc_version: "1"
 ---
 
-# GIF glossary
+# GIF 术语表
 
-The terms these tools use, defined once. Every setting on every page means one of
-these things.
+这些工具用到的术语，在这里一次讲清楚。每个页面上的每个设置，说的都是这里的某一条。
 
 ${TERMS.map(
   (t) =>
     `## ${t.term}\n\n${t.body}${
       t.see
-        ? `\n\nSee [${TOOLS.find((x) => x.slug === t.see)?.name}](${SITE.url}/${t.see}.md).`
+        ? `\n\n参见 [${TOOLS.find((x) => x.slug === t.see)?.name}](${SITE.url}/${t.see}.md)。`
         : ""
     }`,
 ).join("\n\n")}
 
-## Sitemap
+## 站点地图
 
-- [Every page, grouped by section](${SITE.url}/sitemap.md)
+- [所有页面，按分区排列](${SITE.url}/sitemap.md)
 `,
 );
 
 await write(
   "history.md",
   `---
-title: "History — ${SITE.name}"
-description: "Your recent results, stored in this browser only."
+title: "历史记录 — ${SITE.name}"
+description: "你最近的结果，只保存在这个浏览器里。"
 url: "${SITE.url}/history.md"
 last_updated: "${now}"
 doc_version: "1"
 ---
 
-# History
+# 历史记录
 
-Every result you generate is kept in this browser — the index in localStorage and
-the files themselves in IndexedDB. Nothing is uploaded, so the list is per-browser
-and per-device, and clearing site data clears it.
+你生成的每个结果都保存在这个浏览器里——索引在 localStorage，文件本身在 IndexedDB。
+不上传任何东西，所以列表是按浏览器、按设备分开的，清除站点数据就会清空。
 
-## What you can do here
+## 在这里能做什么
 
-- Download any past result again under its original filename.
-- Delete a single entry, or clear the whole history.
-- See which tool produced each file, and when.
+- 用原来的文件名重新下载任何历史结果。
+- 删除单条记录，或者清空整个历史。
+- 查看每个文件是哪个工具生成的、什么时候生成的。
 
-## Sitemap
+## 站点地图
 
-- [Every page, grouped by section](${SITE.url}/sitemap.md)
+- [所有页面，按分区排列](${SITE.url}/sitemap.md)
 `,
 );
 

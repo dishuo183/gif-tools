@@ -6,9 +6,9 @@ import { TOOLS } from "@/lib/tools";
 import { TERMS } from "@/lib/glossary";
 
 export const metadata: Metadata = {
-  title: "GIF glossary",
+  title: "GIF 术语表",
   description:
-    "Plain definitions of the terms these tools use: palette, dithering, frame delay, lossy compression, APNG, WebP, colour quantisation and Slack emoji limits.",
+    "这些工具用到的术语的通俗解释：调色板、抖动、帧延迟、有损压缩、APNG、WebP、色彩量化，以及 Slack 表情的各项限制。",
   alternates: {
     canonical: `${SITE.url}/glossary/`,
     types: { "text/markdown": `${SITE.url}/glossary.md` },
@@ -19,10 +19,10 @@ export default function Page() {
   return (
     <>
       <JsonLd
-        data={pageJsonLd("glossary", "GIF glossary", metadata.description as string, {
+        data={pageJsonLd("glossary", "GIF 术语表", metadata.description as string, {
           mainEntity: {
             "@type": "DefinedTermSet",
-            name: "GIF glossary",
+            name: "GIF 术语表",
             hasDefinedTerm: TERMS.map((t) => ({
               "@type": "DefinedTerm",
               name: t.term,
@@ -31,16 +31,15 @@ export default function Page() {
           },
         })}
       />
-      <h1 className="font-display text-heading text-foreground mb-1.5">GIF glossary</h1>
+      <h1 className="font-display text-heading text-foreground mb-1.5">GIF 术语表</h1>
       <p className="text-sm text-muted-foreground max-w-3xl mb-6">
-        The terms these tools use, defined once. Every setting on every page means one of these
-        things.
+        这些工具用到的术语，在这里一次讲清楚。每个页面上的每个设置，说的都是这里的某一条。
       </p>
       <dl className="max-w-3xl space-y-5">
         {TERMS.map((t) => (
           <div key={t.term} className="border-l-2 border-border pl-4">
             <dt>
-              <h2 className="text-label text-foreground tracking-wider uppercase mb-1">{t.term}</h2>
+              <h2 className="text-label text-foreground tracking-wide uppercase mb-1">{t.term}</h2>
             </dt>
             <dd className="text-sm text-muted-foreground">
               {t.body}
@@ -48,7 +47,7 @@ export default function Page() {
                 <>
                   {" "}
                   <Link href={`/${t.see}/`} className="text-primary underline underline-offset-2">
-                    {TOOLS.find((x) => x.slug === t.see)?.name}
+                    试试「{TOOLS.find((x) => x.slug === t.see)?.name}」
                   </Link>
                 </>
               ) : null}

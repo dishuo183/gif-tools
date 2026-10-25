@@ -13,7 +13,7 @@ async function init() {
   if (!ready) {
     ready = (async () => {
       const wasm = await fetch("/magick/magick.wasm");
-      if (!wasm.ok) throw new Error(`could not load magick.wasm (${wasm.status})`);
+      if (!wasm.ok) throw new Error(`无法加载 magick.wasm（${wasm.status}）`);
       await initializeImageMagick(new Uint8Array(await wasm.arrayBuffer()));
     })();
     ready.catch(() => {

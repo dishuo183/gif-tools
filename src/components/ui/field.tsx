@@ -8,7 +8,7 @@ export function Label({ className, ...p }: React.LabelHTMLAttributes<HTMLLabelEl
   return (
     <label
       className={cn(
-        "text-label text-muted-foreground tracking-[1.5px] uppercase block mb-1",
+        "text-label text-muted-foreground tracking-[0.5px] uppercase block mb-1",
         className,
       )}
       {...p}
@@ -75,7 +75,7 @@ export function Range({
           <span className="flex items-baseline gap-1 text-label text-foreground tabular-nums">
             <input
               type="number"
-              aria-label={`${label} value`}
+              aria-label={`${label}数值`}
               value={value}
               min={p.min}
               max={p.max}
@@ -152,9 +152,9 @@ export function ColorField({
           />
         </span>
         <Input
-          aria-label={`${label} hex value`}
+          aria-label={`${label}十六进制值`}
           value={text}
-          placeholder={clearable ? "transparent" : undefined}
+          placeholder={clearable ? "透明" : undefined}
           spellCheck={false}
           aria-invalid={!valid}
           onChange={(e) => {
@@ -166,9 +166,9 @@ export function ColorField({
         {clearable ? (
           <button
             type="button"
-            aria-label={`${label}: none (transparent)`}
+            aria-label={`${label}：无（透明）`}
             aria-pressed={none}
-            title="No colour (transparent)"
+            title="无颜色（透明）"
             disabled={none}
             onClick={() => onChange("")}
             className="h-9 w-9 shrink-0 border border-input text-muted-foreground hover:text-foreground hover:border-smui-border-hover disabled:opacity-40 disabled:hover:text-muted-foreground disabled:hover:border-input flex items-center justify-center"
@@ -194,7 +194,7 @@ export function Readout({ rows }: { rows: readonly (readonly [string, string])[]
     >
       {rows.map(([k, v]) => (
         <div key={k}>
-          <dt className="text-label text-muted-foreground tracking-[1.5px] uppercase">{k}</dt>
+          <dt className="text-label text-muted-foreground tracking-[0.5px] uppercase">{k}</dt>
           <dd className="text-ui text-foreground tabular-nums">{v}</dd>
         </div>
       ))}

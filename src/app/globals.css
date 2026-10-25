@@ -87,9 +87,17 @@
 }
 
 @theme inline {
-  --font-sans: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-display: var(--font-vcr), "VCR OSD Mono", ui-monospace, monospace;
+  /* 拉丁字体在前、中文字体在后：JetBrains Mono / VCR 都没有中文字形，
+     不补这条栈的话中文会落到浏览器默认字体（Windows 上常是宋体）。 */
+  --font-sans:
+    var(--font-jetbrains), "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
+    ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono:
+    var(--font-jetbrains), "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
+    ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display:
+    var(--font-vcr), "VCR OSD Mono", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC",
+    ui-monospace, monospace;
 
   --text-label: 12px;
   --text-ui: 13px;
@@ -184,13 +192,13 @@
   }
   .smui-label {
     font-size: var(--text-label);
-    letter-spacing: 1.5px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
     color: hsl(var(--muted-foreground));
   }
   .smui-eyebrow {
     font-size: 12px;
-    letter-spacing: 2px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
     color: hsl(var(--muted-foreground));
   }

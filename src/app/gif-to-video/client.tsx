@@ -19,11 +19,11 @@ const CRF_RANGE = { mp4: [15, 40], webm: [20, 50] } as const;
 function crfMeaning(format: "mp4" | "webm", crf: number): string {
   const [lo, hi] = CRF_RANGE[format];
   const t = (crf - lo) / (hi - lo);
-  if (t <= 0.15) return "near-lossless, largest file";
-  if (t <= 0.4) return "sharp detail, larger file";
-  if (t <= 0.65) return "balanced";
-  if (t <= 0.85) return "smaller file, softer detail";
-  return "smallest file, visibly soft";
+  if (t <= 0.15) return "接近无损，文件最大";
+  if (t <= 0.4) return "细节锐利，文件较大";
+  if (t <= 0.65) return "均衡";
+  if (t <= 0.85) return "文件更小，细节更柔和";
+  return "文件最小，肉眼可见发软";
 }
 
 function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) {
@@ -41,9 +41,9 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const outH = source ? source.h - (source.h % 2) : null;
 
   const go = () =>
-    run(`Encoding ${format.toUpperCase()}`, async () => {
+    run(`正在生成 ${format.toUpperCase()}`, async () => {
       setSaving(null); // a failed run must not leave the last file's result on screen
-      if (!file) throw new Error("Choose a GIF first.");
+      if (!file) throw new Error("请先选择 GIF。");
       const out = await ffmpegOnce(
         file,
         "in.gif",
@@ -84,7 +84,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       );
       const pct = Math.round((1 - out.length / file.size) * 100);
       setSaving({
-        text: `${formatBytes(file.size)} → ${formatBytes(out.length)} (${pct >= 0 ? `${pct}% smaller` : `${-pct}% larger`})`,
+        text: `${formatBytes(file.size)} → ${formatBytes(out.length)}（${pct >= 0 ? `缩小 ${pct}%` : `增大 ${-pct}%`}）`,
         pct,
       });
       publish({ data: out, ext: format, note: `${format} crf=${crf}` });
@@ -95,7 +95,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="g2v-format">output format</Label>
+          <Label htmlFor="g2v-format">输出格式</Label>
           <Select
             id="g2v-format"
             value={format}
@@ -107,12 +107,12 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
               setCrf((c) => Math.min(Math.max(c, lo), hi));
             }}
           >
-            <option value="mp4">MP4 (h264) — plays everywhere</option>
-            <option value="webm">WebM (vp9) — smaller, modern browsers</option>
+            <option value="mp4">MP4（h264）—— 到处都能播放</option>
+            <option value="webm">WebM（vp9）—— 更小，现代浏览器支持</option>
           </Select>
         </div>
         <Range
-          label="quality (crf)"
+          label="质量（CRF）"
           min={CRF_RANGE[format][0]}
           max={CRF_RANGE[format][1]}
           step={1}
@@ -124,16 +124,16 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       <Readout
         rows={
           [
-            ["size", outW && outH ? `${outW} × ${outH} px` : file ? "reading…" : "—"],
-            ["format", format === "mp4" ? ".mp4 (h264)" : ".webm (vp9)"],
-            ["quality", `crf ${crf} — ${crfMeaning(format, crf)}`],
+            ["尺寸", outW && outH ? `${outW} × ${outH} px` : file ? "读取中…" : "—"],
+            ["格式", format === "mp4" ? ".mp4（h264）" : ".webm（vp9）"],
+            ["质量", `CRF ${crf} —— ${crfMeaning(format, crf)}`],
           ] as const
         }
       />
 
       {source && (source.w % 2 || source.h % 2) ? (
         <p className="text-label text-muted-foreground">
-          The source has an odd dimension; video codecs need even ones, so it loses one pixel.
+          源文件某一维度是奇数。视频编码器要求偶数，因此会裁掉 1 像素。
         </p>
       ) : null}
 
@@ -158,7 +158,7 @@ export default function GifToVideoTool() {
       tool={tool}
       accept="image/gif,video/*"
       defaultName="video"
-      hint="Video codecs beat GIF compression badly — expect a fraction of the original size."
+      hint="视频编码的压缩效率远高于 GIF，体积通常只有原文件的一小部分。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

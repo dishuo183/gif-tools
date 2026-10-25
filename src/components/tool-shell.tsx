@@ -8,7 +8,7 @@ import { HistoryPicker } from "@/components/history-picker";
 import { usePublishCarry, type Carry } from "@/components/tool-strip";
 import { download, mimeFor } from "@/lib/download";
 import { addToHistory, loadSource, sourceIdFromHash, stashSource } from "@/lib/history";
-import { cn, formatBytes, gifInfo, slugify, type GifInfo } from "@/lib/utils";
+import { cn, formatBytes, gifInfo, slackSlug, slugify, type GifInfo } from "@/lib/utils";
 import type { Tool } from "@/lib/tools";
 
 export interface ToolResult {
@@ -82,6 +82,13 @@ export function ToolShell({
   }, [busy]);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  // Slack 只接受 ASCII 表情名，其余工具允许中文文件名。
+  const toSlug = React.useCallback(
+    (value: string, fallback: string) =>
+      tool.category === "emoji" ? slackSlug(value, fallback) : slugify(value, fallback),
+    [tool.category],
+  );
+
   // Object URLs are revoked whenever they're replaced, so long sessions with
   // many runs don't pin every previous result in memory.
   React.useEffect(
@@ -99,9 +106,9 @@ export function ToolShell({
 
   React.useEffect(() => {
     if (nameEdited) return;
-    const next = slugify(suggestedName ?? "", "");
+    const next = toSlug(suggestedName ?? "", "");
     if (next) setName(next);
-  }, [suggestedName, nameEdited]);
+  }, [suggestedName, nameEdited, toSlug]);
 
   const setBusy = React.useCallback((b: boolean, message?: string) => {
     setBusyState(b);
@@ -147,9 +154,9 @@ export function ToolShell({
       // Seed the download name from the source so it stays recognisable — but
       // never over a name the user typed on purpose.
       const stem = f.name.replace(/\.[^.]+$/, "");
-      if (stem && !nameEdited) setName(slugify(stem, tool.slug));
+      if (stem && !nameEdited) setName(toSlug(stem, tool.slug));
     },
-    [tool.slug, nameEdited],
+    [tool.slug, nameEdited, toSlug],
   );
 
   // The URL hash names the file: on load, and whenever back/forward changes it.
@@ -210,7 +217,7 @@ export function ToolShell({
           {requiresFile ? (
             <Card>
               <CardHeader>
-                <CardTitle>source</CardTitle>
+                <CardTitle>源文件</CardTitle>
               </CardHeader>
               <CardContent>
                 <div
@@ -234,7 +241,7 @@ export function ToolShell({
                     accept={accept}
                     className="sr-only"
                     id={`${tool.slug}-file`}
-                    aria-label={`Choose a file for ${tool.name}`}
+                    aria-label={`为 ${tool.name} 选择文件`}
                     onChange={(e) => onPick(e.target.files?.[0] ?? null)}
                   />
                   <Upload
@@ -242,7 +249,7 @@ export function ToolShell({
                     aria-hidden="true"
                   />
                   <p className="text-ui text-foreground mb-1">
-                    {file ? file.name : "Drop a file here"}
+                    {file ? file.name : "把文件拖到这里"}
                   </p>
                   {file ? (
                     <Facts
@@ -254,12 +261,12 @@ export function ToolShell({
                     />
                   ) : (
                     <p className="text-label text-muted-foreground mb-3">
-                      or choose one, paste one, or pick from history — nothing leaves your device
+                      也可以选择文件、粘贴图片，或从历史记录里挑——文件不会离开你的设备
                     </p>
                   )}
                   <div className="flex flex-wrap justify-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
-                      {file ? "Choose another" : "Choose file"}
+                      {file ? "换一个文件" : "选择文件"}
                     </Button>
                     <HistoryPicker onPick={onPick} video={accept.includes("video")} />
                   </div>
@@ -268,7 +275,7 @@ export function ToolShell({
                 {sourceUrl && file?.type.startsWith("image/") ? (
                   <img
                     src={sourceUrl}
-                    alt={`Source preview of ${file.name}`}
+                    alt={`源文件预览：${file.name}`}
                     className="mt-3 max-h-64 mx-auto border border-border"
                   />
                 ) : null}
@@ -285,7 +292,7 @@ export function ToolShell({
 
           <Card>
             <CardHeader>
-              <CardTitle>settings</CardTitle>
+              <CardTitle>设置</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4">
               {hint ? <p className="text-ui text-muted-foreground">{hint}</p> : null}
@@ -296,14 +303,14 @@ export function ToolShell({
 
         <Card className="lg:sticky lg:top-16">
           <CardHeader>
-            <CardTitle>result</CardTitle>
+            <CardTitle>结果</CardTitle>
             {busy ? (
               <span className="text-label text-[hsl(var(--smui-yellow))] tracking-wider uppercase">
-                working
+                处理中
               </span>
             ) : result ? (
               <span className="text-label text-[hsl(var(--smui-green))] tracking-wider uppercase">
-                ready
+                已完成
               </span>
             ) : null}
           </CardHeader>
@@ -321,7 +328,7 @@ export function ToolShell({
                       className="mx-auto mb-2 size-5 animate-spin text-primary"
                       aria-hidden="true"
                     />
-                    <p className="text-ui text-foreground">{busyMessage ?? "Processing"}</p>
+                    <p className="text-ui text-foreground">{busyMessage ?? "处理中"}</p>
                     <p className="text-label text-muted-foreground tabular-nums">
                       {Math.round(progress * 100)}%
                     </p>
@@ -333,25 +340,25 @@ export function ToolShell({
               ) : previewUrl && resultMime?.startsWith("image/") ? (
                 <img
                   src={previewUrl}
-                  alt={`Result from the ${tool.name} tool`}
+                  alt={`${tool.name}的结果`}
                   className="max-h-72 max-w-full"
                 />
               ) : previewUrl ? (
                 <p className="text-ui text-muted-foreground">
-                  {result?.ext.toUpperCase()} ready to download
+                  {result?.ext.toUpperCase()} 已可下载
                 </p>
               ) : (
                 <p className="text-ui text-muted-foreground text-center">
                   {busy
-                    ? (busyMessage ?? "Processing")
+                    ? (busyMessage ?? "处理中")
                     : requiresFile
-                      ? "Pick a file to start."
-                      : "Nothing yet."}
+                      ? "选择文件后开始。"
+                      : "还没有结果。"}
                 </p>
               )}
             </div>
             {previewUrl && tool.category === "emoji" && resultMime?.startsWith("image/") ? (
-              <div className="flex items-center gap-2" title="How it reads at Slack's 22px">
+              <div className="flex items-center gap-2" title="在 Slack 的 22px 下看起来如何">
                 {(["#ffffff", "#1a1d21"] as const).map((bg) => (
                   <span
                     key={bg}
@@ -362,7 +369,7 @@ export function ToolShell({
                   </span>
                 ))}
                 <span className="text-label text-muted-foreground">
-                  at Slack size, on light and dark
+                  Slack 尺寸，深色与浅色背景
                 </span>
               </div>
             ) : null}
@@ -390,7 +397,7 @@ export function ToolShell({
             ) : null}
 
             <div>
-              <Label htmlFor={`${tool.slug}-name`}>filename</Label>
+              <Label htmlFor={`${tool.slug}-name`}>文件名</Label>
               <div className="flex gap-2">
                 <Input
                   id={`${tool.slug}-name`}
@@ -407,11 +414,11 @@ export function ToolShell({
                 </span>
               </div>
               <p id={`${tool.slug}-name-hint`} className="text-label text-muted-foreground mt-1">
-                Saved as{" "}
+                保存为{" "}
                 <code className="text-foreground">
-                  {slugify(name, tool.slug)}.{result?.ext ?? suggestedExt ?? "gif"}
-                </code>{" "}
-                — a valid Slack emoji name.
+                  {toSlug(name, tool.slug)}.{result?.ext ?? suggestedExt ?? "gif"}
+                </code>
+                {tool.category === "emoji" ? "——符合 Slack 表情命名规则。" : "。"}
               </p>
             </div>
 
@@ -421,7 +428,7 @@ export function ToolShell({
                 disabled={!result}
                 onClick={() => {
                   if (!result) return;
-                  const filename = `${slugify(name, tool.slug)}.${result.ext}`;
+                  const filename = `${toSlug(name, tool.slug)}.${result.ext}`;
                   download(result.data, filename, resultMime ?? undefined);
                   const mime = resultMime ?? "application/octet-stream";
                   void addToHistory(
@@ -431,7 +438,7 @@ export function ToolShell({
                 }}
               >
                 <Download aria-hidden="true" />
-                Download{result ? ` · ${formatBytes(result.data.length)}` : ""}
+                下载{result ? ` · ${formatBytes(result.data.length)}` : ""}
               </Button>
             </div>
           </CardContent>
@@ -505,11 +512,11 @@ function Facts({
   className?: string;
 }) {
   const cells: [string, React.ReactNode][] = [];
-  if (size) cells.push(["dimensions", `${size.w} × ${size.h}`]);
-  cells.push(["format", ext.toUpperCase()], ["file size", formatBytes(bytes)]);
+  if (size) cells.push(["尺寸", `${size.w} × ${size.h}`]);
+  cells.push(["格式", ext.toUpperCase()], ["文件大小", formatBytes(bytes)]);
   if (gif && gif.frames > 1) {
-    cells.push(["frames", gif.frames]);
-    cells.push(["duration", `${(gif.duration / 1000).toFixed(1)} s`]);
+    cells.push(["帧数", gif.frames]);
+    cells.push(["时长", `${(gif.duration / 1000).toFixed(1)} 秒`]);
   }
   return (
     <div className={cn("grid gap-2", className)}>

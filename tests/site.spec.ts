@@ -17,7 +17,7 @@ test.describe("every page", () => {
       await expect(page).toHaveTitle(/\S/);
       const desc = page.locator('meta[name="description"]');
       await expect(desc).toHaveAttribute("content", /.{50,}/);
-      await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
       await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
 
       // No console errors on load.
@@ -66,7 +66,7 @@ test.describe("tool pages", () => {
 test("theme toggle switches between light and dark", async ({ page }) => {
   await page.goto("/");
   const html = page.locator("html");
-  const toggle = page.getByRole("button", { name: /theme/i });
+  const toggle = page.getByRole("button", { name: /主题/ });
 
   // Cycle until we've observed both classes; the control rotates light→dark→system.
   const seen = new Set<string>();
@@ -83,7 +83,7 @@ test("skip link is reachable from the keyboard", async ({ page }) => {
   await page.goto("/");
   await page.keyboard.press("Tab");
   const focused = page.locator(":focus");
-  await expect(focused).toHaveText(/skip to content/i);
+  await expect(focused).toHaveText(/跳到主要内容/);
 });
 
 test("home lists every tool and each link resolves", async ({ page }) => {

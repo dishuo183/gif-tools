@@ -32,13 +32,13 @@ export default function Home() {
       />
 
       <section className="mb-10 max-w-3xl">
-        <p className="smui-eyebrow mb-1.5">gif toolkit</p>
+        <p className="smui-eyebrow mb-1.5">GIF 工具箱</p>
         <h1 className="font-display text-hero text-foreground leading-[1.1] mb-3">
-          Every GIF tool, running in your browser.
+          所有 GIF 工具，都在你的浏览器里运行。
         </h1>
         <p className="text-sm text-muted-foreground">
-          {SITE.description} Results are kept in a local history so you can grab them again, and
-          every download is named so it can be dropped straight into Slack.
+          {SITE.description}
+          结果会保存在本地历史里，随时可以再拿；每个下载都按 Slack 的规则命名，可以直接拖进去用。
         </p>
       </section>
 

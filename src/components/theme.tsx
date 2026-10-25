@@ -14,6 +14,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 const ORDER = ["light", "dark", "system"] as const;
 const ICON = { light: Sun, dark: Moon, system: Monitor };
+const LABEL = { light: "浅色", dark: "深色", system: "跟随系统" } as const;
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -29,8 +30,8 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      aria-label={`Theme: ${current}. Click to change.`}
-      title={`Theme: ${current}`}
+      aria-label={`主题：${LABEL[current]}。点击切换。`}
+      title={`主题：${LABEL[current]}`}
       onClick={() => setTheme(ORDER[(ORDER.indexOf(current as never) + 1) % ORDER.length])}
     >
       <Icon aria-hidden="true" />

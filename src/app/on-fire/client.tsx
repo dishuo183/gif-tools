@@ -61,22 +61,22 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const [fire, setFire] = React.useState<HTMLImageElement | null>(null);
 
   React.useEffect(() => {
-    loadImage(FIRE_SRC).then(setFire, () => setError("Could not load the fire image."));
+    loadImage(FIRE_SRC).then(setFire, () => setError("无法加载火焰图片。"));
   }, [setError]);
 
   const settings: Settings = { size, subject, front };
 
   const go = () =>
-    run("Igniting", async () => {
-      if (!img || !fire) throw new Error("Choose an image first.");
+    run("正在点火", async () => {
+      if (!img || !fire) throw new Error("请先选择一张图片。");
       if (!animated) {
         const c = document.createElement("canvas");
         c.width = c.height = size;
         const ctx = c.getContext("2d");
-        if (!ctx) throw new Error("Your browser blocked the 2D canvas this tool needs.");
+        if (!ctx) throw new Error("浏览器阻止了此工具所需的 2D Canvas。");
         draw(ctx, fire, img, 0, settings);
         const blob = await new Promise<Blob | null>((res) => c.toBlob(res, "image/png"));
-        if (!blob) throw new Error("The browser could not encode the PNG.");
+        if (!blob) throw new Error("浏览器无法编码这张 PNG。");
         publish({
           data: new Uint8Array(await blob.arrayBuffer()),
           ext: "png",
@@ -104,16 +104,16 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="fire-size">output size</Label>
+          <Label htmlFor="fire-size">输出尺寸</Label>
           <Select id="fire-size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
             <option value={64}>64 × 64</option>
-            <option value={128}>128 × 128 — Slack emoji</option>
+            <option value={128}>128 × 128 — Slack 表情</option>
             <option value={256}>256 × 256</option>
           </Select>
         </div>
         <Range
-          label="image size"
-          suffix="% of width"
+          label="图片尺寸"
+          suffix="%（占宽度）"
           min={30}
           max={90}
           step={1}
@@ -122,12 +122,12 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
       </div>
       <Checkbox
-        label="Flames in front of the image too"
+        label="火焰也显示在图片前方"
         checked={front}
         onChange={(e) => setFront(e.target.checked)}
       />
       <Checkbox
-        label="Animate flames (animated GIF; off gives a static PNG)"
+        label="火焰动画（生成 GIF 动画；关闭则输出静态 PNG）"
         checked={animate}
         onChange={(e) => setAnimate(e.target.checked)}
       />
@@ -141,7 +141,7 @@ export default function OnFireTool() {
       tool={tool}
       accept="image/png,image/jpeg,image/webp,image/gif"
       defaultName="on-fire"
-      hint="Drop in whatever is on fire. A transparent PNG looks best, so the flames show around it; the background stays transparent."
+      hint="把正在着火的东西拖进来。透明 PNG 效果最好，火焰会从四周透出；背景会保持透明。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

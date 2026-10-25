@@ -11,7 +11,7 @@ import { getBlob, readIndex, type HistoryEntry } from "@/lib/history";
 export function HistoryPicker({
   onPick,
   video = false,
-  label = "From history",
+  label = "从历史记录",
 }: {
   onPick: (file: File) => void;
   /** Whether video results are offered too. */
@@ -38,7 +38,7 @@ export function HistoryPicker({
   const pick = async (e: HistoryEntry) => {
     const blob = await getBlob(e.id);
     if (!blob) {
-      setError(`The file for ${e.filename} is no longer stored in this browser.`);
+      setError(`这个浏览器里已经没有 ${e.filename} 的文件了。`);
       return;
     }
     setError(null);
@@ -93,7 +93,7 @@ export function HistoryPicker({
             </ul>
           ) : (
             <p className="text-ui text-muted-foreground">
-              Nothing in your history yet. Results from any tool land here.
+              历史记录还是空的。任何工具的结果都会出现在这里。
             </p>
           )}
         </div>

@@ -8,6 +8,7 @@ import { Shuffle } from "lucide-react";
 import { FACES, FACE_IDS, faceOptions, useFace, type FaceId } from "@/lib/fonts";
 import { getTool } from "@/lib/tools";
 import { inkMetrics } from "@/lib/utils";
+import { splitWords } from "@/lib/text-layout";
 
 const tool = getTool("text-emoji");
 
@@ -43,13 +44,13 @@ const base: Style = {
 const PRESETS: { id: string; label: string; style: Style }[] = [
   {
     id: "sunset",
-    label: "sunset",
+    label: "日落",
     style: { ...base, fill: "#ffb02e", fill2: "#ff2e88", stroke: "#2a0d1e", strokeW: 7 },
   },
-  { id: "classic", label: "classic", style: { ...base } },
+  { id: "classic", label: "经典", style: { ...base } },
   {
     id: "caution",
-    label: "caution",
+    label: "警示",
     style: {
       ...base,
       fill: "#101010",
@@ -62,17 +63,17 @@ const PRESETS: { id: string; label: string; style: Style }[] = [
   },
   {
     id: "alert",
-    label: "alert",
+    label: "警报",
     style: { ...base, bg: "#d7263d", transparent: false, stroke: "", strokeW: 0 },
   },
   {
     id: "go",
-    label: "go",
+    label: "通行",
     style: { ...base, bg: "#2b9348", transparent: false, stroke: "", strokeW: 0 },
   },
   {
     id: "neon",
-    label: "neon",
+    label: "霓虹",
     style: {
       ...base,
       fill: "#4dfff0",
@@ -86,12 +87,12 @@ const PRESETS: { id: string; label: string; style: Style }[] = [
   },
   {
     id: "blueprint",
-    label: "blueprint",
+    label: "蓝图",
     style: { ...base, bg: "#1f6feb", transparent: false, stroke: "", strokeW: 0, italic: true },
   },
   {
     id: "bubblegum",
-    label: "bubblegum",
+    label: "泡泡糖",
     style: {
       ...base,
       fill: "#ff5fcf",
@@ -103,7 +104,7 @@ const PRESETS: { id: string; label: string; style: Style }[] = [
   },
   {
     id: "sticker",
-    label: "sticker",
+    label: "贴纸",
     style: {
       ...base,
       fill: "#ff3b6b",
@@ -115,13 +116,20 @@ const PRESETS: { id: string; label: string; style: Style }[] = [
   },
   {
     id: "ink",
-    label: "ink",
+    label: "墨黑",
     style: { ...base, fill: "#101010", fill2: "#101010", stroke: "#ffffff", strokeW: 10 },
   },
 ];
 
 const ANIMS = ["pulse", "shake", "rainbow"] as const;
 type Anim = (typeof ANIMS)[number];
+
+/** Display names for the animation toggles; the ids stay as-is. */
+const ANIM_LABEL: Record<Anim, string> = {
+  pulse: "脉动",
+  shake: "抖动",
+  rainbow: "彩虹",
+};
 
 interface Opts extends Style {
   text: string;
@@ -140,9 +148,9 @@ function forcedLines(text: string): string[] | null {
 function splitLines(text: string, n: number): string[] {
   const forced = forcedLines(text);
   if (forced) return forced.length ? forced : [""];
-  const words = text.trim().split(/\s+/).filter(Boolean);
+  const { words, joiner } = splitWords(text);
   if (!words.length) return [""];
-  if (n <= 1 || words.length === 1) return [words.join(" ")];
+  if (n <= 1 || words.length === 1) return [words.join(joiner)];
   if (n >= words.length) return words;
   const target = words.join("").length / n;
   const out: string[] = [];
@@ -152,20 +160,21 @@ function splitLines(text: string, n: number): string[] {
     const left = words.length - i - 1;
     const need = n - out.length - 1;
     if (out.length < n - 1 && (cur.join("").length >= target || left <= need) && left >= need) {
-      out.push(cur.join(" "));
+      out.push(cur.join(joiner));
       cur = [];
     }
   });
-  if (cur.length) out.push(cur.join(" "));
+  if (cur.length) out.push(cur.join(joiner));
   return out;
 }
 
-/** Auto line count: one word per line up to three lines. */
+/** Auto line count: one word per line up to three lines; two characters per line for CJK. */
 function autoLines(text: string): number {
   const forced = forcedLines(text);
   if (forced) return Math.max(1, forced.length);
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  return Math.min(3, Math.max(1, words));
+  const { words, joiner } = splitWords(text);
+  if (joiner === "") return Math.min(3, Math.max(1, Math.ceil(words.length / 2)));
+  return Math.min(3, Math.max(1, words.length));
 }
 
 /** Draw one frame. `t` is 0..1 through the animation loop. */
@@ -175,7 +184,7 @@ function draw(ctx: CanvasRenderingContext2D, S: number, o: Opts, t: number) {
     ctx.fillStyle = o.bg;
     ctx.fillRect(0, 0, S, S);
   }
-  const lines = splitLines(o.text || "yes", o.lines);
+  const lines = splitLines(o.text || "好耶", o.lines);
   const margin = S * 0.06;
   const inner = S - margin * 2;
   const gap = inner * 0.03;
@@ -297,18 +306,18 @@ function Body({
   optsRef.current = opts;
 
   const go = () =>
-    run("Rendering", async () => {
-      if (!text.trim()) throw new Error("Type a word or short phrase to render first.");
+    run("正在渲染", async () => {
+      if (!text.trim()) throw new Error("请先输入一个词或短句。");
       const o = optsRef.current;
       if (format === "png") {
         const c = document.createElement("canvas");
         c.width = c.height = size;
         const ctx = c.getContext("2d");
-        if (!ctx) throw new Error("Your browser blocked the 2D canvas this tool needs.");
+        if (!ctx) throw new Error("浏览器阻止了此工具所需的 2D Canvas。");
         draw(ctx, size, { ...o, anims: [] }, 0);
         setProgress(0.6);
         const blob = await new Promise<Blob | null>((res) => c.toBlob(res, "image/png"));
-        if (!blob) throw new Error("The browser could not encode the PNG. Try a smaller size.");
+        if (!blob) throw new Error("浏览器无法编码这张 PNG。请尝试更小的尺寸。");
         publish({
           data: new Uint8Array(await blob.arrayBuffer()),
           ext: "png",
@@ -365,7 +374,7 @@ function Body({
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="te-text">phrase</Label>
+          <Label htmlFor="te-text">文字</Label>
           <Input
             id="te-text"
             value={text}
@@ -375,14 +384,13 @@ function Body({
             aria-describedby="te-text-hint"
           />
           <p id="te-text-hint" className="text-label text-muted-foreground mt-1">
-            Short is best — each line is stretched to fill the square. Type \n to force a line
-            break.
+            越短越好——每一行都会被拉伸填满方块。输入 \n 可强制换行。
           </p>
         </div>
         <div>
-          <Label htmlFor="te-lines">lines</Label>
+          <Label htmlFor="te-lines">行数</Label>
           <Select id="te-lines" value={lineMode} onChange={(e) => setLineMode(e.target.value)}>
-            <option value="auto">auto ({lines})</option>
+            <option value="auto">自动（{lines}）</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -392,7 +400,7 @@ function Body({
 
       <fieldset>
         <legend className="text-label text-muted-foreground tracking-[1.5px] uppercase mb-1">
-          style preset
+          样式预设
         </legend>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((p) => (
@@ -412,7 +420,7 @@ function Body({
           ))}
           <Button type="button" size="sm" variant="outline" onClick={randomize}>
             <Shuffle className="size-3.5" aria-hidden="true" />
-            randomize
+            随机
           </Button>
         </div>
       </fieldset>
@@ -420,7 +428,7 @@ function Body({
       <div className="grid gap-4 sm:grid-cols-2">
         <ColorField
           id="te-fill"
-          label="text colour"
+          label="文字颜色"
           value={style.fill}
           // The bottom colour follows the top one until it is set on its own.
           onChange={(v) =>
@@ -429,13 +437,13 @@ function Body({
         />
         <ColorField
           id="te-fill2"
-          label="text colour (bottom)"
+          label="文字颜色（底部）"
           value={style.fill2}
           onChange={(v) => set("fill2", v)}
         />
         <ColorField
           id="te-stroke"
-          label="outline colour"
+          label="描边颜色"
           value={style.stroke || "#000000"}
           onChange={(v) =>
             setStyle((s) => ({
@@ -447,14 +455,14 @@ function Body({
         />
         <ColorField
           id="te-stroke2"
-          label="outline colour (bottom)"
+          label="描边颜色（底部）"
           value={style.stroke2 || style.stroke || "#000000"}
           onChange={(v) => set("stroke2", v)}
         />
       </div>
 
       <Range
-        label="outline thickness"
+        label="描边粗细"
         min={0}
         max={20}
         value={style.strokeW}
@@ -464,7 +472,7 @@ function Body({
       <div className="grid gap-3">
         <ColorField
           id="te-bg"
-          label="background colour"
+          label="背景颜色"
           value={style.transparent ? "" : style.bg}
           onChange={(v) => {
             setStyle((s) => ({ ...s, transparent: !v, bg: v || s.bg }));
@@ -473,12 +481,12 @@ function Body({
           clearable
         />
         <Checkbox
-          label="Italic"
+          label="斜体"
           checked={style.italic}
           onChange={(e) => set("italic", e.target.checked)}
         />
         <Checkbox
-          label="Glow"
+          label="发光"
           checked={style.glow}
           onChange={(e) => set("glow", e.target.checked)}
         />
@@ -486,28 +494,28 @@ function Body({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="te-font">typeface</Label>
+          <Label htmlFor="te-font">字体</Label>
           <Select id="te-font" value={face} onChange={(e) => setFace(e.target.value as FaceId)}>
             {faceOptions("luckiest")}
           </Select>
         </div>
         <div>
-          <Label htmlFor="te-size">size</Label>
+          <Label htmlFor="te-size">尺寸</Label>
           <Select id="te-size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
             <option value={64}>64 × 64</option>
-            <option value={128}>128 × 128 — Slack</option>
+            <option value={128}>128 × 128 — Slack 表情</option>
             <option value={256}>256 × 256</option>
           </Select>
         </div>
       </div>
 
       <div>
-        <Label>animation</Label>
+        <Label>动画</Label>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           {ANIMS.map((a) => (
             <Checkbox
               key={a}
-              label={a}
+              label={ANIM_LABEL[a]}
               checked={anims.includes(a)}
               onChange={(e) =>
                 setAnims(e.target.checked ? [...anims, a] : anims.filter((x) => x !== a))
@@ -516,7 +524,7 @@ function Body({
           ))}
         </div>
         <p className="text-label text-muted-foreground mt-1">
-          Tick any to get an animated GIF; none gives a static PNG.
+          勾选任意一项即可生成 GIF 动画；全不选则输出静态 PNG。
         </p>
       </div>
     </>
@@ -525,7 +533,7 @@ function Body({
 
 export default function TextEmojiTool() {
   // Held here so the download name and its extension can track the controls.
-  const [text, setText] = React.useState("hell yeah");
+  const [text, setText] = React.useState("好耶");
   const [anims, setAnims] = React.useState<Anim[]>([]);
   const format = anims.length ? "gif" : "png";
   return (
@@ -535,7 +543,7 @@ export default function TextEmojiTool() {
       defaultName="text-emoji"
       suggestedName={text}
       suggestedExt={format}
-      hint='Slack shows emoji at about 22px, so words are stacked and stretched to fill the square — "hell yeah" becomes HELL over YEAH.'
+      hint='Slack 中的表情只有约 22px，所以文字会被堆叠并拉伸填满方块——“好耶”会变成上下两行、撑满画面。'
     >
       {(props) => (
         <Body {...props} text={text} setText={setText} anims={anims} setAnims={setAnims} />

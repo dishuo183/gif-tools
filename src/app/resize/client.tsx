@@ -15,22 +15,17 @@ const VIDEO = ["mp4", "webm"];
 function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) {
   const run = useRun({ setBusy, setError, setProgress });
   const [mode, setMode] = React.useState<"pixels" | "percent">("pixels");
-  const [width, setWidth] = React.useState(480);
-  const [height, setHeight] = React.useState(270);
+  const [width, setWidth] = React.useState(1340);
+  const [height, setHeight] = React.useState(1785);
   const [percent, setPercent] = React.useState(50);
   const [lock, setLock] = React.useState(true);
   const [filter, setFilter] = React.useState("lanczos");
   // useFirstFrame decodes the file in the browser, so the source dimensions come
   // for free — probe() would boot the 32MB ffmpeg core just to read two numbers.
-  const { frame, size: src, failed } = useFirstFrame(file);
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const { size: src, failed } = useFirstFrame(file);
 
-  React.useEffect(() => {
-    if (src) {
-      setWidth(src.w);
-      setHeight(src.h);
-    }
-  }, [src]);
+  // 不再用源文件尺寸覆盖这里的默认值：1340×1785 是常用的输出尺寸，选文件时
+  // 把用户的目标尺寸改掉反而添乱；源尺寸在下面的状态行里照常显示。
 
   const onWidth = (v: number) => {
     setWidth(v);
@@ -46,26 +41,14 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       ? { w: Math.round((src.w * percent) / 100), h: Math.round((src.h * percent) / 100) }
       : { w: width, h: height };
 
-  // Live preview at the exact output size — one CSS pixel per output pixel, so
-  // a 64px result looks 64px small instead of filling the panel.
+  // 最终尺寸就是 ffmpeg 要用的尺寸；结果面板会显示真实输出，这里不再画第二份预览。
   const tw = clamp(Math.round(target.w), 1, 4000);
   const th = clamp(Math.round(target.h), 1, 4000);
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || !frame) return;
-    canvas.width = tw;
-    canvas.height = th;
-    ctx.clearRect(0, 0, tw, th);
-    ctx.imageSmoothingEnabled = filter !== "neighbor";
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(frame, 0, 0, tw, th);
-  }, [frame, tw, th, filter]);
 
   const go = () =>
-    run("Resizing", async () => {
-      if (!file) throw new Error("Choose a file first.");
-      if (!src) throw new Error("Still reading the source dimensions — try again in a moment.");
+    run("正在调整尺寸", async () => {
+      if (!file) throw new Error("请先选择文件。");
+      if (!src) throw new Error("正在读取源文件尺寸——请稍候再试。");
       const ext = outExt(file.name);
       const isVideo = VIDEO.includes(ext);
       // Video encoders need even dimensions; GIF and stills don't care.
@@ -91,22 +74,22 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="resize-mode">mode</Label>
+          <Label htmlFor="resize-mode">模式</Label>
           <Select
             id="resize-mode"
             value={mode}
             onChange={(e) => setMode(e.target.value as "pixels" | "percent")}
           >
-            <option value="pixels">by pixels</option>
-            <option value="percent">by percent</option>
+            <option value="pixels">按像素</option>
+            <option value="percent">按百分比</option>
           </Select>
         </div>
         <div>
-          <Label htmlFor="resize-filter">scaling filter</Label>
+          <Label htmlFor="resize-filter">缩放滤镜</Label>
           <Select id="resize-filter" value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="lanczos">lanczos — sharpest (default)</option>
-            <option value="bicubic">bicubic — smoother</option>
-            <option value="neighbor">nearest neighbor — pixel art</option>
+            <option value="lanczos">Lanczos —— 最锐利（默认）</option>
+            <option value="bicubic">双三次 —— 更平滑</option>
+            <option value="neighbor">最近邻 — 像素画</option>
           </Select>
         </div>
       </div>
@@ -114,7 +97,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       {mode === "pixels" ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="resize-w">width (px)</Label>
+            <Label htmlFor="resize-w">宽度（px）</Label>
             <Input
               id="resize-w"
               type="number"
@@ -125,7 +108,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             />
           </div>
           <div>
-            <Label htmlFor="resize-h">height (px)</Label>
+            <Label htmlFor="resize-h">高度（px）</Label>
             <Input
               id="resize-h"
               type="number"
@@ -138,7 +121,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         </div>
       ) : (
         <div>
-          <Label htmlFor="resize-pct">percent of original</Label>
+          <Label htmlFor="resize-pct">相对于原图的百分比</Label>
           <Input
             id="resize-pct"
             type="number"
@@ -151,43 +134,18 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       )}
 
       <Checkbox
-        label="Lock aspect ratio"
+        label="锁定宽高比"
         checked={lock}
         onChange={(e) => setLock(e.target.checked)}
       />
 
       <p className="text-ui text-muted-foreground" role="status" aria-live="polite">
         {src
-          ? `Source ${src.w}×${src.h} → output ${tw}×${th}`
+          ? `源 ${src.w}×${src.h} → 输出 ${tw}×${th}`
           : failed
             ? NO_PREVIEW
-            : "Choose a file to read its dimensions."}
+            : "选择一个文件以读取尺寸。"}
       </p>
-
-      <div>
-        <span className="text-label text-muted-foreground tracking-[1.5px] uppercase block mb-1">
-          preview at output size
-        </span>
-        <div className="checkerboard flex max-h-80 items-center justify-center overflow-auto border border-border p-4">
-          {frame ? (
-            <canvas
-              ref={canvasRef}
-              role="img"
-              aria-label={`Preview of the resized output at ${tw} by ${th} pixels`}
-              className="block shrink-0"
-              style={{
-                width: tw,
-                height: th,
-                imageRendering: filter === "neighbor" ? "pixelated" : "auto",
-              }}
-            />
-          ) : (
-            <p className="text-ui text-muted-foreground py-8">
-              {failed ? NO_PREVIEW : "Choose a file to preview."}
-            </p>
-          )}
-        </div>
-      </div>
     </>
   );
 }
@@ -197,7 +155,7 @@ export default function ResizeTool() {
     <ToolShell
       tool={tool}
       defaultName="resized"
-      hint="Scale a GIF, image or video. GIFs are re-encoded with a generated palette so the smaller version still looks clean."
+      hint="缩放 GIF、图片或视频。GIF 会用生成的调色板重新编码，缩小后依然清晰。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

@@ -2,7 +2,7 @@
   "name": "gif-tools",
   "version": "0.1.0",
   "private": true,
-  "description": "statico's GIF tools — a GIF toolkit that runs entirely in the browser.",
+  "description": "GIF 工具箱 —— 完全在浏览器里运行的 GIF 处理工具。",
   "license": "MIT",
   "packageManager": "pnpm@11.24.0",
   "type": "module",

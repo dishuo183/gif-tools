@@ -5,7 +5,7 @@ import { frameNames, probe, withFFmpeg } from "@/lib/engines/ffmpeg";
 import { loadImage } from "@/lib/engines/gif-encode";
 
 /** Shown when the browser cannot decode a file that the wasm engines still can. */
-export const NO_PREVIEW = "This browser cannot decode that file, so there is no preview.";
+export const NO_PREVIEW = "这个浏览器解不开该文件，所以没有预览。";
 
 /**
  * The first frame of a file, ready to draw on a canvas, so tools can show what
@@ -130,7 +130,7 @@ export function useFrames(
             await ff.writeFile(input, new Uint8Array(await file.arrayBuffer()));
             const code = await ff.exec(["-i", input, "-vsync", "0", "frame-%04d.png"]);
             if (code !== 0)
-              throw new Error("ffmpeg could not read that file. Try a GIF, PNG or JPEG.");
+              throw new Error("ffmpeg 读不了这个文件。试试 GIF、PNG 或 JPEG。");
             const names = await frameNames(ff);
             const out: HTMLImageElement[] = [];
             for (const name of names.slice(0, MAX_FRAMES)) {
@@ -145,7 +145,7 @@ export function useFrames(
               setProgress?.(Math.min(0.9, out.length / 60));
             }
             if (!out.length)
-              throw new Error("No frames came out of that file. Try a GIF, PNG or JPEG.");
+              throw new Error("这个文件没有解出任何帧。试试 GIF、PNG 或 JPEG。");
             if (stale) return;
             setAnim({
               frames: out,
@@ -172,7 +172,7 @@ export function useFrames(
           setError(
             err instanceof Error
               ? err.message
-              : "That file could not be decoded. Try a PNG, JPEG, GIF or WebP.",
+              : "无法解码该文件。试试 PNG、JPEG、GIF 或 WebP。",
           );
       } finally {
         if (!stale) setReading(false);

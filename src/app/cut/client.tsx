@@ -36,9 +36,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       .then((info) => {
         if (stale) return;
         if (!info.durationSec) {
-          setError(
-            "Could not read a duration from that file. Cut needs an animated GIF or a video.",
-          );
+          setError("无法读取该文件的时长。剪切需要动画 GIF 或视频。");
           return;
         }
         setDuration(info.durationSec);
@@ -46,7 +44,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         setEnd(round2(info.durationSec));
       })
       .catch((e: unknown) => {
-        if (!stale) setError(e instanceof Error ? e.message : "Could not read that file.");
+        if (!stale) setError(e instanceof Error ? e.message : "无法读取该文件。");
       });
     return () => {
       stale = true;
@@ -71,10 +69,10 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const selected = round2(Math.max(0, end - start));
 
   const go = () =>
-    run("Cutting", async () => {
-      if (!file) throw new Error("Choose a file first.");
-      if (!duration) throw new Error("Still reading the duration — try again in a moment.");
-      if (selected <= 0) throw new Error("The end time must be after the start time.");
+    run("正在剪切", async () => {
+      if (!file) throw new Error("请先选择文件。");
+      if (!duration) throw new Error("正在读取时长——请稍候再试。");
+      if (selected <= 0) throw new Error("结束时间必须晚于开始时间。");
       const ext = outExt(file.name);
       const out = await ffmpegOnce(
         file,
@@ -101,7 +99,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4">
         <div>
-          <Label htmlFor="cut-start-range">start (seconds)</Label>
+          <Label htmlFor="cut-start-range">开始（秒）</Label>
           <input
             id="cut-start-range"
             type="range"
@@ -113,7 +111,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             onChange={(e) => onStart(Number(e.target.value))}
             className="w-full accent-primary h-9"
           />
-          <Label htmlFor="cut-start-num">start time in seconds</Label>
+          <Label htmlFor="cut-start-num">开始时间（秒）</Label>
           <Input
             id="cut-start-num"
             type="number"
@@ -127,7 +125,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         </div>
 
         <div>
-          <Label htmlFor="cut-end-range">end (seconds)</Label>
+          <Label htmlFor="cut-end-range">结束（秒）</Label>
           <input
             id="cut-end-range"
             type="range"
@@ -139,7 +137,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             onChange={(e) => onEnd(Number(e.target.value))}
             className="w-full accent-primary h-9"
           />
-          <Label htmlFor="cut-end-num">end time in seconds</Label>
+          <Label htmlFor="cut-end-num">结束时间（秒）</Label>
           <Input
             id="cut-end-num"
             type="number"
@@ -158,15 +156,15 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         aria-live="polite"
         className="border border-border bg-smui-surface-0 p-3 grid gap-1"
       >
-        <span className="text-label uppercase tracking-wider text-muted-foreground">result</span>
+        <span className="text-label uppercase tracking-wider text-muted-foreground">结果</span>
         <p className="text-ui text-foreground tabular-nums">
           {duration
-            ? `${round2(duration)}s \u2192 ${selected}s`
-            : "Choose an animated GIF or video to read its duration."}
+            ? `${round2(duration)} 秒 → ${selected} 秒`
+            : "选择动画 GIF 或视频以读取时长。"}
         </p>
         {duration ? (
           <p className="text-label text-muted-foreground tabular-nums">
-            {`Keeping ${start}s to ${end}s of the source.`}
+            {`保留源文件的 ${start} 秒到 ${end} 秒。`}
           </p>
         ) : null}
       </div>
@@ -180,7 +178,7 @@ export default function CutTool() {
       tool={tool}
       accept="image/gif,image/webp,video/*"
       defaultName="cut"
-      hint="Trim to a start and end point. The output keeps the format you put in."
+      hint="剪切到指定的起点和终点。输出保持输入格式。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

@@ -19,7 +19,7 @@ export const CardHeader = ({ className, ...p }: React.HTMLAttributes<HTMLDivElem
 export const CardTitle = ({ className, ...p }: React.HTMLAttributes<HTMLHeadingElement>) => (
   <h2
     className={cn(
-      "text-xs text-muted-foreground tracking-[1.5px] uppercase font-normal",
+      "text-xs text-muted-foreground tracking-[0.5px] uppercase font-normal",
       className,
     )}
     {...p}

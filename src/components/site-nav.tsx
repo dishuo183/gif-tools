@@ -29,12 +29,12 @@ export function SiteNav() {
           >
             gif<span className="text-primary">.</span>tools
           </Link>
-          <nav aria-label="Tool categories" className="hidden md:flex items-baseline gap-4">
+          <nav aria-label="工具分类" className="hidden md:flex items-baseline gap-4">
             {CATEGORY_ORDER.map((c) => (
               <Link
                 key={c}
                 href={`/#${c}`}
-                className="text-label tracking-[1.5px] uppercase text-muted-foreground hover:text-foreground transition-colors"
+                className="text-label tracking-[0.5px] uppercase text-muted-foreground hover:text-foreground transition-colors"
               >
                 {CATEGORIES[c].label}
               </Link>
@@ -42,20 +42,20 @@ export function SiteNav() {
             <Link
               href="/history/"
               className={cn(
-                "text-label tracking-[1.5px] uppercase transition-colors",
+                "text-label tracking-[0.5px] uppercase transition-colors",
                 pathname?.startsWith("/history")
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              history
+              历史
             </Link>
           </nav>
         </div>
 
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" asChild>
-            <a href={REPO} aria-label="Source on GitHub" title="Source on GitHub">
+            <a href={REPO} aria-label="GitHub 源码" title="GitHub 源码">
               <Github aria-hidden="true" />
             </a>
           </Button>
@@ -66,7 +66,7 @@ export function SiteNav() {
             className="md:hidden"
             aria-expanded={open}
             aria-controls="mobile-nav"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? "关闭菜单" : "打开菜单"}
             onClick={() => setOpen((v) => !v)}
           >
             {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
@@ -77,7 +77,7 @@ export function SiteNav() {
       {open ? (
         <nav
           id="mobile-nav"
-          aria-label="All tools"
+          aria-label="全部工具"
           className="md:hidden border-t border-border max-h-[70vh] overflow-y-auto"
         >
           {CATEGORY_ORDER.map((c) => (
@@ -99,7 +99,7 @@ export function SiteNav() {
           ))}
           <div className="px-4 py-3">
             <Link href="/history/" className="text-ui text-foreground hover:text-primary">
-              History
+              历史记录
             </Link>
           </div>
         </nav>
@@ -112,22 +112,22 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border mt-16 px-4 sm:px-6 py-6">
       <p className="text-label text-muted-foreground tracking-wider">
-        Everything runs in your browser with WebAssembly builds of ffmpeg, gifsicle and ImageMagick.
-        Your files are never uploaded.
+        所有处理都在你的浏览器里完成，用的是 ffmpeg、gifsicle 和 ImageMagick 的 WebAssembly
+        版本。文件永远不会上传。
       </p>
       <p className="text-label text-muted-foreground tracking-wider mt-2">
         <Link href="/glossary/" className="hover:text-foreground underline underline-offset-2">
-          Glossary
+          术语表
         </Link>
         {" · "}
         {/* Plain anchor: it's a static file, and next/link would prefetch it
             as an RSC route and 404. */}
         <a href="/sitemap.md" className="hover:text-foreground underline underline-offset-2">
-          Sitemap
+          站点地图
         </a>
         {" · "}
         <a href={REPO} className="hover:text-foreground underline underline-offset-2">
-          Source on GitHub
+          GitHub 源码
         </a>
       </p>
     </footer>

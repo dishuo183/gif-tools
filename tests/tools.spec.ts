@@ -7,22 +7,25 @@ const GIF = path.join(import.meta.dirname, "fixtures/sample.gif");
 // Real wasm encodes: the ffmpeg core alone is ~32MB, so these are slow by nature.
 test.describe.configure({ mode: "serial", timeout: 180_000 });
 
+// Most tools auto-run when the settings change, so there is no "generate"
+// button to click: pick the file, then wait for the download button to enable.
+const downloadButton = (page: import("@playwright/test").Page) =>
+  page.getByRole("button", { name: /^下载/ });
+
 test("optimize actually shrinks a GIF with gifsicle", async ({ page }) => {
   await page.goto("/optimize/");
   await page.setInputFiles("#optimize-file", GIF);
-  await page.getByRole("button", { name: /optimize gif/i }).click();
 
-  const download = page.getByRole("button", { name: /^download/i });
+  const download = downloadButton(page);
   await expect(download).toBeEnabled({ timeout: 120_000 });
-  await expect(page.getByRole("img", { name: /result from the/i })).toBeVisible();
+  await expect(page.getByRole("img", { name: /的结果/ })).toBeVisible();
 });
 
 test("text-emoji generates a downloadable file with a slack-safe name", async ({ page }) => {
   await page.goto("/text-emoji/");
 
   // Generators need no upload, so this exercises the canvas path on its own.
-  await page.getByRole("button", { name: /^generate /i }).click();
-  const download = page.getByRole("button", { name: /^download/i });
+  const download = downloadButton(page);
   await expect(download).toBeEnabled({ timeout: 60_000 });
 
   const [saved] = await Promise.all([page.waitForEvent("download"), download.click()]);
@@ -32,13 +35,10 @@ test("text-emoji generates a downloadable file with a slack-safe name", async ({
 test("a result is written to history and survives a reload", async ({ page }) => {
   await page.goto("/optimize/");
   await page.setInputFiles("#optimize-file", GIF);
-  await page.getByRole("button", { name: /optimize gif/i }).click();
-  await expect(page.getByRole("button", { name: /^download/i })).toBeEnabled({
-    timeout: 120_000,
-  });
+  await expect(downloadButton(page)).toBeEnabled({ timeout: 120_000 });
 
   await page.goto("/history/");
-  await expect(page.getByRole("button", { name: /^download /i }).first()).toBeVisible({
+  await expect(page.getByRole("button", { name: /^下载 / }).first()).toBeVisible({
     timeout: 15_000,
   });
 });
@@ -50,14 +50,8 @@ test("a result is written to history and survives a reload", async ({ page }) =>
 test("the ffmpeg worker loads its core and produces output", async ({ page }) => {
   await page.goto("/reverse/");
   await page.setInputFiles("input[type=file]", GIF);
-  await page
-    .getByRole("button", { name: /reverse/i })
-    .last()
-    .click();
 
-  await expect(page.getByRole("button", { name: /^download/i })).toBeEnabled({
-    timeout: 150_000,
-  });
+  await expect(downloadButton(page)).toBeEnabled({ timeout: 150_000 });
   await expect(page.getByText(/cannot find module/i)).toHaveCount(0);
 });
 
@@ -69,11 +63,8 @@ test("imagemagick links against the wasm32 build", async ({ page }) => {
     "input[type=file]",
     path.join(import.meta.dirname, "fixtures/sample.png"),
   );
-  await page.getByRole("button", { name: "Compress image", exact: true }).click();
 
-  await expect(page.getByRole("button", { name: /^download/i })).toBeEnabled({
-    timeout: 120_000,
-  });
+  await expect(downloadButton(page)).toBeEnabled({ timeout: 120_000 });
   await expect(page.getByText(/LinkError/i)).toHaveCount(0);
 });
 
@@ -83,14 +74,12 @@ test("imagemagick links against the wasm32 build", async ({ page }) => {
 test("a failed run does not wedge the tool", async ({ page }) => {
   await page.goto("/reverse/");
   await page.setInputFiles("#reverse-file", path.join(import.meta.dirname, "fixtures/broken.gif"));
-  await page.getByRole("button", { name: "Reverse", exact: true }).click();
   // Not getByRole("alert"): Next ships an always-present empty route announcer
   // with that role, so a bare alert query resolves before the run even fails.
-  await expect(page.getByText(/could not reverse this file/i)).toBeVisible({ timeout: 150_000 });
+  await expect(page.getByText(/无法倒放该文件/)).toBeVisible({ timeout: 150_000 });
 
   await page.setInputFiles("#reverse-file", GIF);
-  await page.getByRole("button", { name: "Reverse", exact: true }).click();
-  const download = page.getByRole("button", { name: /^download/i });
+  const download = downloadButton(page);
   await expect(download).toBeEnabled({ timeout: 150_000 });
 
   // The recovered run has to produce a real GIF, not just an enabled button.
@@ -104,11 +93,10 @@ test("a failed run does not wedge the tool", async ({ page }) => {
 test("split packs every frame into a downloadable ZIP", async ({ page }) => {
   await page.goto("/split/");
   await page.setInputFiles("#split-file", GIF);
-  await page.getByRole("button", { name: "Split into frames", exact: true }).click();
 
-  const download = page.getByRole("button", { name: /^download/i });
+  const download = downloadButton(page);
   await expect(download).toBeEnabled({ timeout: 150_000 });
-  await expect(page.getByText(/frames extracted/i)).toBeVisible();
+  await expect(page.getByText(/已提取/)).toBeVisible();
 
   const [saved] = await Promise.all([page.waitForEvent("download"), download.click()]);
   expect(saved.suggestedFilename()).toMatch(/\.zip$/);
@@ -132,9 +120,8 @@ for (const [fixture, wantTransparent] of [
       "input[type=file]",
       path.join(import.meta.dirname, "fixtures", fixture),
     );
-    await page.getByRole("button", { name: /party it up/i }).click();
 
-    const download = page.getByRole("button", { name: /^download/i });
+    const download = downloadButton(page);
     await expect(download).toBeEnabled({ timeout: 60_000 });
     const [saved] = await Promise.all([page.waitForEvent("download"), download.click()]);
 
@@ -156,7 +143,7 @@ for (const [fixture, wantTransparent] of [
 test("italic text is centred on its ink, not its advance width", async ({ page }) => {
   await page.goto("/text-emoji/");
   await page.fill("#te-text", "hell yeah");
-  const italic = page.getByLabel("Italic");
+  const italic = page.getByLabel("斜体");
   if (!(await italic.isChecked())) await italic.check();
 
   const gaps = await page
@@ -185,7 +172,7 @@ test("old-man-yells composites a logo into a transparent GIF", async ({ page }) 
     "#old-man-yells-file",
     path.join(import.meta.dirname, "fixtures/alpha.png"),
   );
-  const download = page.getByRole("button", { name: /^download/i });
+  const download = downloadButton(page);
   await expect(download).toBeEnabled({ timeout: 60_000 });
   const [saved] = await Promise.all([page.waitForEvent("download"), download.click()]);
   expect(saved.suggestedFilename()).toBe("old-man-yells-at.gif");
@@ -194,7 +181,7 @@ test("old-man-yells composites a logo into a transparent GIF", async ({ page }) 
 test("on-fire composites an image over animated flames", async ({ page }) => {
   await page.goto("/on-fire/");
   await page.setInputFiles("#on-fire-file", path.join(import.meta.dirname, "fixtures/alpha.png"));
-  const download = page.getByRole("button", { name: /^download/i });
+  const download = downloadButton(page);
   await expect(download).toBeEnabled({ timeout: 60_000 });
   const [saved] = await Promise.all([page.waitForEvent("download"), download.click()]);
   expect(saved.suggestedFilename()).toBe("on-fire.gif");

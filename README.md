@@ -4,6 +4,9 @@
 > Every line of this project — the site, the tests and the documentation — was
 > written by [Claude Code](https://claude.com/claude-code).
 
+> 界面默认中文。中文文案集中在 `src/lib/tools.ts`、`src/lib/glossary.ts` 和
+> 各个 `src/app/<slug>/client.tsx` 里，直接改字面量即可。
+
 A GIF toolkit that runs entirely in your browser: convert, resize, crop, cut,
 optimize and caption GIFs, and build Slack emoji. ffmpeg, gifsicle and
 ImageMagick are compiled to WebAssembly and run in the page.
@@ -11,6 +14,35 @@ ImageMagick are compiled to WebAssembly and run in the page.
 Nothing is uploaded. There is no API, no account and no server-side processing.
 
 Live at [gif.statico.io](https://gif.statico.io).
+
+## 本地运行（Windows）
+
+需要 Node 24（`.node-version` 指定）；pnpm 由 `packageManager` 固定为 11.24.0，
+建议用 `corepack enable` 让 Node 自己选版本。
+
+```powershell
+pnpm install          # 安装依赖，第一次要下载 ffmpeg/ImageMagick 的 wasm，合计约 100MB
+pnpm dev              # 开发模式，打开 http://localhost:3000
+```
+
+只在本机使用、不需要改代码时，用生产构建更接近线上表现：
+
+```powershell
+pnpm build            # 静态导出到 out/，并生成 llms.txt、sitemap.md 等
+pnpm start            # 用 serve 托管 out/，还是 http://localhost:3000
+```
+
+要点：
+
+- `prebuild` 会把 `@ffmpeg/core` 和 `@magick/magick-wasm` 的二进制复制到
+  `public/`，并给 ffmpeg 的 worker 打补丁；这一步不能跳过。
+- 字体已改为自托管（`src/app/jetbrains-mono-latin.woff2`），构建过程不需要访问
+  Google Fonts；运行时所有资源同源，断网也能用。
+- 首次打开需要 ffmpeg 的工具（转换、裁剪、倒放等）会懒加载约 31MB 的 wasm
+  核心，第一次会慢几秒，之后走缓存。
+- 如果 `pnpm install` 报 `ECONNREFUSED`，检查 `~/.npmrc` 里的 `proxy` /
+  `https-proxy` 是否指向一个没在运行的端口（例如 `127.0.0.1:7890`），临时清掉
+  这两行或换一个可用代理即可。
 
 ## Tools
 

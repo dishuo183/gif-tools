@@ -78,15 +78,15 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   }, [frame, size, deg, turn, bg, hflip, vflip]);
 
   const go = () =>
-    run("Rotating", async () => {
-      if (!file) throw new Error("Choose a GIF, image or video first.");
+    run("正在旋转", async () => {
+      if (!file) throw new Error("请先选择一个 GIF、图片或视频。");
       if (turn === "custom" && bg && !HEX.test(bg)) {
-        throw new Error("Background colour must be a six-digit hex value like #1a1a1a.");
+        throw new Error("背景色必须是六位十六进制值，例如 #1a1a1a。");
       }
 
       const parts: string[] = [];
       if (turn === "custom") {
-        if (!Number.isFinite(angle)) throw new Error("Enter a rotation angle in degrees.");
+        if (!Number.isFinite(angle)) throw new Error("请输入旋转角度（单位：度）。");
         const rad = `${angle}*PI/180`;
         // Video can't carry alpha, so an empty (transparent) colour falls back to black there.
         const ext = outputExt(file);
@@ -97,7 +97,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       }
       if (hflip) parts.push("hflip");
       if (vflip) parts.push("vflip");
-      if (parts.length === 0) throw new Error("Pick a rotation or a flip — nothing to do yet.");
+      if (parts.length === 0) throw new Error("请选择旋转角度或翻转方式，目前没有可执行的操作。");
 
       const ext = outputExt(file);
       // x264/VP9 reject odd dimensions, and rotw()/roth() round to whatever.
@@ -118,7 +118,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         { onProgress: (r) => setProgress(r) },
       ).catch((err: unknown) => {
         throw new Error(
-          `ffmpeg could not rotate this file (${err instanceof Error ? err.message : String(err)}). Check the angle and try a different input format.`,
+          `ffmpeg 无法旋转此文件（${err instanceof Error ? err.message : String(err)}）。请检查角度，或换一种输入格式再试。`,
         );
       });
 
@@ -130,23 +130,23 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="rotate-turn">rotation</Label>
+          <Label htmlFor="rotate-turn">旋转</Label>
           <Select
             id="rotate-turn"
             value={turn}
             onChange={(e) => setTurn(e.target.value as typeof turn)}
           >
-            <option value="0">None</option>
-            <option value="90">90° clockwise</option>
+            <option value="0">不旋转</option>
+            <option value="90">顺时针 90°</option>
             <option value="180">180°</option>
-            <option value="270">270° clockwise</option>
-            <option value="custom">Custom angle</option>
+            <option value="270">顺时针 270°</option>
+            <option value="custom">自定义角度</option>
           </Select>
         </div>
 
         {turn === "custom" ? (
           <div>
-            <Label htmlFor="rotate-angle">angle in degrees</Label>
+            <Label htmlFor="rotate-angle">角度（度）</Label>
             <Input
               id="rotate-angle"
               type="number"
@@ -163,7 +163,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       {turn === "custom" ? (
         <ColorField
           id="rotate-bg"
-          label="corner background colour"
+          label="边角背景色"
           value={bg}
           onChange={setBg}
           clearable
@@ -172,12 +172,12 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div className="grid gap-3">
         <Checkbox
-          label="Flip horizontally (mirror)"
+          label="水平翻转（镜像）"
           checked={hflip}
           onChange={(e) => setHflip(e.target.checked)}
         />
         <Checkbox
-          label="Flip vertically"
+          label="垂直翻转"
           checked={vflip}
           onChange={(e) => setVflip(e.target.checked)}
         />
@@ -185,25 +185,25 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div>
         <span className="text-label text-muted-foreground tracking-[1.5px] uppercase block mb-1">
-          preview
+          预览
         </span>
         <div className="checkerboard flex items-center justify-center border border-border p-4">
           {frame && size ? (
             <canvas
               ref={canvasRef}
               role="img"
-              aria-label={`Preview rotated ${deg} degrees${hflip ? ", flipped horizontally" : ""}${vflip ? ", flipped vertically" : ""}`}
+              aria-label={`旋转 ${deg} 度后的预览${hflip ? "，已水平翻转" : ""}${vflip ? "，已垂直翻转" : ""}`}
               className="block max-h-64 max-w-full"
             />
           ) : (
             <p className="text-ui text-muted-foreground py-8">
-              {failed ? NO_PREVIEW : "Choose a file to preview."}
+              {failed ? NO_PREVIEW : "选择一个文件即可预览。"}
             </p>
           )}
         </div>
         {size ? (
           <p className="text-ui text-muted-foreground mt-2 tabular-nums" aria-live="polite">
-            Output {rotated(size.w, size.h, deg).ow} × {rotated(size.w, size.h, deg).oh} px
+            输出 {rotated(size.w, size.h, deg).ow} × {rotated(size.w, size.h, deg).oh} px
           </p>
         ) : null}
       </div>
@@ -217,7 +217,7 @@ export default function RotateTool() {
       tool={tool}
       accept="image/gif,image/png,image/jpeg,image/webp,video/*"
       defaultName="rotated"
-      hint="Rotation is applied first, then the flips. Animation is kept; still images come back as PNG."
+      hint="先旋转，再翻转。动画会保留；静态图片输出为 PNG。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

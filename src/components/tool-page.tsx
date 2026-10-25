@@ -10,11 +10,11 @@ export function ToolPage({ slug, children }: { slug: string; children: React.Rea
   return (
     <>
       <JsonLd data={toolJsonLd(slug)} />
-      <nav aria-label="Breadcrumb" className="mb-3">
+      <nav aria-label="面包屑" className="mb-3">
         <ol className="flex items-center gap-1 text-label text-muted-foreground tracking-wider uppercase">
           <li>
             <Link href="/" className="hover:text-foreground">
-              home
+              首页
             </Link>
           </li>
           <ChevronRight className="size-3" aria-hidden="true" />

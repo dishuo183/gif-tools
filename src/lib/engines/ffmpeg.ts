@@ -11,6 +11,32 @@ import { FFmpeg } from "@ffmpeg/ffmpeg";
  */
 let instance: FFmpeg | null = null;
 let loading: Promise<FFmpeg> | null = null;
+// Bumped by resetFFmpeg() so a load that finishes after a reset cannot put the
+// dead instance back into `instance`.
+let generation = 0;
+
+const FETCH_TIMEOUT_MS = 30_000;
+const LOAD_TIMEOUT_MS = 120_000;
+/** No output progress for this long means the worker is wedged, not merely slow. */
+const STALL_TIMEOUT_MS = 90_000;
+
+/**
+ * Drop a wedged instance (crashed worker, stalled exec) so the next run starts
+ * from a clean core instead of waiting on a promise that will never settle.
+ */
+export function resetFFmpeg(): void {
+  generation += 1;
+  const ff = instance;
+  instance = null;
+  loading = null;
+  if (ff) {
+    try {
+      ff.terminate();
+    } catch {
+      /* already gone */
+    }
+  }
+}
 
 export type ProgressFn = (ratio: number, message?: string) => void;
 
@@ -19,10 +45,48 @@ export type ProgressFn = (ratio: number, message?: string) => void;
  * file over 25MB, so it is inflated here and handed to ffmpeg as a blob URL.
  * The transfer is the same size either way — the browser would have negotiated
  * gzip anyway — this just moves the decompression from the edge into the page.
+ *
+ * The trailing `?v=` is not just cache busting: Edge classifies a URL that ends
+ * in `.gz` as a download, starts a download, and answers the fetch with an
+ * empty 204 — the app then fails with "Failed to fetch" while the core lands in
+ * the user's Downloads folder. A query string keeps it a normal subresource.
  */
+const CORE_URL = "/ffmpeg/ffmpeg-core.wasm.gz?v=1";
+
 async function inflateCore(): Promise<string> {
-  const res = await fetch(new URL("/ffmpeg/ffmpeg-core.wasm.gz", location.href));
-  if (!res.ok || !res.body) throw new Error(`could not fetch the ffmpeg core (HTTP ${res.status})`);
+  const url = new URL(CORE_URL, location.href);
+  // A stalled download (blocked by a browser heuristic, a half-open proxy) never
+  // rejects on its own, which used to leave the tool spinning at 0% forever.
+  const load = async (init?: RequestInit) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  let res: Response | null = null;
+  try {
+    res = await load();
+  } catch {
+    res = null;
+  }
+  // A proxy or a half-written cache entry can hand back an empty body; one
+  // cache-bypassing retry is cheaper than asking the user to reload.
+  if (!res || !res.ok || !res.body) {
+    try {
+      res = await load({ cache: "reload" });
+    } catch {
+      res = null;
+    }
+  }
+  if (!res || !res.ok || !res.body) {
+    throw new Error(
+      res ? `无法获取 ffmpeg 核心（HTTP ${res.status}）` : "无法获取 ffmpeg 核心（网络超时）",
+    );
+  }
   const wasm = res.body.pipeThrough(new DecompressionStream("gzip"));
   const bytes = await new Response(wasm).arrayBuffer();
   return URL.createObjectURL(new Blob([bytes], { type: "application/wasm" }));
@@ -31,26 +95,55 @@ async function inflateCore(): Promise<string> {
 export async function getFFmpeg(onProgress?: ProgressFn): Promise<FFmpeg> {
   if (instance) return instance;
   if (!loading) {
+    const gen = generation;
     loading = (async () => {
       const ff = new FFmpeg();
-      await ff.load({
-        // classWorkerURL keeps ffmpeg's worker classic; the bundled one becomes
-        // a module worker that can neither importScripts nor dynamic-import the core.
-        // Absolute: ffmpeg.wasm resolves these against its own module URL, so a
-        // root-relative path ends up as file:/// and the Worker refuses to load.
-        classWorkerURL: new URL("/ffmpeg/worker.js", location.href).href,
-        coreURL: new URL("/ffmpeg/ffmpeg-core.js", location.href).href,
-        wasmURL: await inflateCore(),
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          resetFFmpeg();
+          // `ff` never made it into `instance`, so resetFFmpeg cannot reach it.
+          try {
+            ff.terminate();
+          } catch {
+            /* already gone */
+          }
+          reject(new Error("加载 ffmpeg 超时，请刷新页面后重试。"));
+        }, LOAD_TIMEOUT_MS);
       });
+      try {
+        await Promise.race([
+          ff.load({
+            // classWorkerURL keeps ffmpeg's worker classic; the bundled one becomes
+            // a module worker that can neither importScripts nor dynamic-import the core.
+            // Absolute: ffmpeg.wasm resolves these against its own module URL, so a
+            // root-relative path ends up as file:/// and the Worker refuses to load.
+            classWorkerURL: new URL("/ffmpeg/worker.js", location.href).href,
+            coreURL: new URL("/ffmpeg/ffmpeg-core.js", location.href).href,
+            wasmURL: await inflateCore(),
+          }),
+          timeout,
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+      if (gen !== generation) {
+        try {
+          ff.terminate();
+        } catch {
+          /* already gone */
+        }
+        throw new Error("ffmpeg 已重置，请重试。");
+      }
       instance = ff;
       return ff;
     })();
     loading.catch(() => {
       // let a later call retry instead of caching the rejection forever
-      loading = null;
+      if (gen === generation) loading = null;
     });
   }
-  onProgress?.(0, "loading ffmpeg");
+  onProgress?.(0, "正在加载 ffmpeg");
   return loading;
 }
 
@@ -119,12 +212,35 @@ export async function runFFmpeg({
   return serialize(async () => {
     const written: string[] = [];
 
+    // The worker can die (wasm OOM, a browser killing it) without ever settling
+    // ff.exec(), which leaves the UI at 0% forever. Any progress event re-arms
+    // this timer; if nothing happens for STALL_TIMEOUT_MS we reset the engine
+    // and surface a real error instead.
+    let stallTimer: ReturnType<typeof setTimeout> | undefined;
+    let rejectStall: ((err: Error) => void) | undefined;
+    const stall = new Promise<never>((_, reject) => {
+      rejectStall = reject;
+    });
+    const armStall = () => {
+      if (stallTimer) clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        resetFFmpeg();
+        rejectStall?.(
+          new Error(
+            "ffmpeg 长时间没有进展，可能内存不足或 worker 已崩溃。请刷新页面后重试，或把尺寸、帧数调小。",
+          ),
+        );
+      }, STALL_TIMEOUT_MS);
+    };
+
     const handler = ({ progress, time }: { progress: number; time: number }) => {
+      armStall();
       // ffmpeg's own `progress` is unreliable for some filters; prefer time/duration.
       const ratio = durationSec && durationSec > 0 ? time / 1e6 / durationSec : progress;
       if (Number.isFinite(ratio)) onProgress?.(Math.min(Math.max(ratio, 0), 1));
     };
     ff.on("progress", handler);
+    armStall();
 
     // Outputs are cleaned up whether or not the run succeeds: a non-zero exec
     // can still have created the file, and ffmpeg refuses to overwrite it on
@@ -139,18 +255,30 @@ export async function runFFmpeg({
       }
 
       // -y: never stop to ask about an overwrite, there is no tty to answer.
-      const code = await ff.exec(["-y", ...args]);
-      if (code !== 0) throw new Error(`ffmpeg exited with code ${code}`);
+      const execPromise = ff.exec(["-y", ...args]);
+      // If the watchdog wins the race, exec may still reject later; handle it so
+      // it does not surface as an unhandled rejection.
+      execPromise.catch(() => {});
+      let code: number;
+      try {
+        code = await Promise.race([execPromise, stall]);
+      } catch (err) {
+        // A rejected exec or a stalled worker means the instance is unreliable.
+        resetFFmpeg();
+        throw err;
+      }
+      if (code !== 0) throw new Error(`ffmpeg 退出，代码 ${code}`);
 
       const result: Record<string, Uint8Array> = {};
       for (const name of outputs) {
         const data = await ff.readFile(name);
-        if (typeof data === "string") throw new Error(`expected binary output for ${name}`);
+        if (typeof data === "string") throw new Error(`期望 ${name} 是二进制输出`);
         result[name] = data as Uint8Array;
       }
       onProgress?.(1);
       return result;
     } finally {
+      if (stallTimer) clearTimeout(stallTimer);
       ff.off("progress", handler);
       for (const name of written) {
         try {

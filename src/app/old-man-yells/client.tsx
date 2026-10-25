@@ -61,22 +61,22 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const animated = shake || anim.frames.length > 1;
 
   React.useEffect(() => {
-    loadImage(ABE_SRC).then(setAbe, () => setError("Could not load the Grandpa Simpson image."));
+    loadImage(ABE_SRC).then(setAbe, () => setError("无法加载辛普森爷爷的图片。"));
   }, [setError]);
 
   const settings: Settings = { size, logo, shake };
 
   const go = () =>
-    run("Yelling", async () => {
-      if (!img || !abe) throw new Error("Choose an image first.");
+    run("正在生成", async () => {
+      if (!img || !abe) throw new Error("请先选择一张图片。");
       if (!animated) {
         const c = document.createElement("canvas");
         c.width = c.height = size;
         const ctx = c.getContext("2d");
-        if (!ctx) throw new Error("Your browser blocked the 2D canvas this tool needs.");
+        if (!ctx) throw new Error("浏览器阻止了此工具所需的 2D Canvas。");
         draw(ctx, abe, img, 0, settings);
         const blob = await new Promise<Blob | null>((res) => c.toBlob(res, "image/png"));
-        if (!blob) throw new Error("The browser could not encode the PNG.");
+        if (!blob) throw new Error("浏览器无法编码这张 PNG。");
         publish({
           data: new Uint8Array(await blob.arrayBuffer()),
           ext: "png",
@@ -104,16 +104,16 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="omy-size">output size</Label>
+          <Label htmlFor="omy-size">输出尺寸</Label>
           <Select id="omy-size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
             <option value={64}>64 × 64</option>
-            <option value={128}>128 × 128 — Slack emoji</option>
+            <option value={128}>128 × 128 — Slack 表情</option>
             <option value={256}>256 × 256</option>
           </Select>
         </div>
         <Range
-          label="target size"
-          suffix="% of width"
+          label="目标尺寸"
+          suffix="%（占宽度）"
           min={20}
           max={60}
           step={1}
@@ -122,7 +122,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
       </div>
       <Checkbox
-        label="Shake fist (animated GIF; off gives a static PNG)"
+        label="挥拳（生成 GIF 动画；关闭则输出静态 PNG）"
         checked={shake}
         onChange={(e) => setShake(e.target.checked)}
       />
@@ -136,7 +136,7 @@ export default function OldManYellsTool() {
       tool={tool}
       accept="image/png,image/jpeg,image/webp,image/gif"
       defaultName="old-man-yells-at"
-      hint="Drop in the logo of whatever deserves yelling at. A transparent PNG logo looks best; the background stays transparent either way."
+      hint="把你想吼的那个标志拖进来。透明 PNG 标志效果最好；无论哪种，背景都会保持透明。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

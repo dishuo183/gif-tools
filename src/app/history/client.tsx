@@ -52,7 +52,7 @@ export default function HistoryClient() {
   if (entries === null) {
     return (
       <p role="status" className="text-ui text-muted-foreground">
-        Loading your history…
+        正在读取历史记录…
       </p>
     );
   }
@@ -62,8 +62,7 @@ export default function HistoryClient() {
       <Card>
         <CardContent>
           <p ref={headingRef} tabIndex={-1} className="text-ui text-muted-foreground">
-            Nothing here yet. Anything you make with a tool on this site shows up here
-            automatically.
+          这里还是空的。用本站任意工具做出的结果都会自动出现在这里。
           </p>
         </CardContent>
       </Card>
@@ -76,7 +75,7 @@ export default function HistoryClient() {
     // without the other leaves a row whose file is gone. Say so rather than
     // having the button do nothing at all.
     if (!blob) {
-      setError(`The file for ${entry.filename} is no longer stored in this browser.`);
+      setError(`这个浏览器里已经没有 ${entry.filename} 的文件了。`);
       return;
     }
     setError(null);
@@ -86,7 +85,7 @@ export default function HistoryClient() {
   const openIn = async (entry: HistoryEntry, slug: string) => {
     const blob = await getBlob(entry.id);
     if (!blob) {
-      setError(`The file for ${entry.filename} is no longer stored in this browser.`);
+      setError(`这个浏览器里已经没有 ${entry.filename} 的文件了。`);
       return;
     }
     router.push(sourceHref(slug, await stashSource(blob, entry.filename)));
@@ -106,7 +105,7 @@ export default function HistoryClient() {
           tabIndex={-1}
           className="text-label text-muted-foreground tracking-wider uppercase"
         >
-          {entries.length} item{entries.length === 1 ? "" : "s"}
+          {entries.length} 项
         </p>
         <Button
           variant="outline"
@@ -118,7 +117,7 @@ export default function HistoryClient() {
           }}
         >
           <Trash2 aria-hidden="true" />
-          Clear all
+          全部清除
         </Button>
       </div>
 
@@ -145,7 +144,7 @@ export default function HistoryClient() {
                   </p>
                   <p className="text-label text-muted-foreground">
                     <time dateTime={new Date(e.createdAt).toISOString()}>
-                      {new Date(e.createdAt).toLocaleString()}
+                      {new Date(e.createdAt).toLocaleString("zh-CN")}
                     </time>
                   </p>
                   {e.note ? (
@@ -155,12 +154,12 @@ export default function HistoryClient() {
                   ) : null}
                   <div className="flex flex-wrap gap-1 mt-1.5">
                     <Select
-                      aria-label={`Open ${e.filename} in a tool`}
+                      aria-label={`在工具中打开 ${e.filename}`}
                       value=""
                       className="h-8 w-auto text-label"
                       onChange={(ev) => ev.target.value && void openIn(e, ev.target.value)}
                     >
-                      <option value="">Open in…</option>
+                      <option value="">在…中打开</option>
                       {OPENERS.map((t) => (
                         <option key={t.slug} value={t.slug}>
                           {t.name}
@@ -171,15 +170,15 @@ export default function HistoryClient() {
                       variant="outline"
                       size="sm"
                       onClick={() => void save(e)}
-                      aria-label={`Download ${e.filename}`}
+                      aria-label={`下载 ${e.filename}`}
                     >
                       <Download aria-hidden="true" />
-                      Save
+                      保存
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      aria-label={`Delete ${e.filename}`}
+                      aria-label={`删除 ${e.filename}`}
                       onClick={async () => {
                         await removeFromHistory(e.id);
                         refocus.current = true;

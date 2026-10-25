@@ -63,7 +63,7 @@ export function ToolStrip() {
   };
 
   return (
-    <nav aria-label="Switch tool" className="border-b border-border bg-card px-3 py-1.5 sm:px-5">
+    <nav aria-label="切换工具" className="border-b border-border bg-card px-3 py-1.5 sm:px-5">
       <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
         {ORDER.map((cat) => (
           <ul key={cat} aria-label={CATEGORIES[cat].label} className="contents">
@@ -77,7 +77,7 @@ export function ToolStrip() {
                     aria-current={active ? "page" : undefined}
                     onClick={(e) => void go(e, t.slug)}
                     className={cn(
-                      "flex h-7 items-center gap-1.5 whitespace-nowrap border px-2 text-label uppercase tracking-[1.5px] transition-colors",
+                      "flex h-7 items-center gap-1.5 whitespace-nowrap border px-2 text-label uppercase tracking-[0.5px] transition-colors",
                       active
                         ? "border-[hsl(var(--tone)/0.6)] bg-[hsl(var(--tone)/0.12)] text-foreground"
                         : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -99,10 +99,10 @@ export function ToolStrip() {
         {carry ? (
           <div
             role="radiogroup"
-            aria-label="File to pass to the next tool"
+            aria-label="传给下一个工具的文件"
             className="ml-auto flex items-center border border-border pl-2 text-label text-muted-foreground"
           >
-            <span className="mr-1 whitespace-nowrap">next tool gets</span>
+            <span className="mr-1 whitespace-nowrap">下一个工具使用</span>
             {(["source", "result"] as const).map((kind) => {
               const item = carry[kind];
               const on = chosen === item;
@@ -115,14 +115,14 @@ export function ToolStrip() {
                   disabled={!item}
                   onClick={() => setPick(kind)}
                   className={cn(
-                    "flex h-7 items-center gap-1.5 px-2 uppercase tracking-[1.5px] transition-colors disabled:opacity-40",
+                    "flex h-7 items-center gap-1.5 px-2 uppercase tracking-[0.5px] transition-colors disabled:opacity-40",
                     on ? "bg-secondary text-foreground" : "hover:text-foreground",
                   )}
                 >
                   {item?.url ? (
                     <img src={item.url} alt="" className="checkerboard size-4 object-contain" />
                   ) : null}
-                  {kind}
+                  {kind === "source" ? "源文件" : "结果"}
                 </button>
               );
             })}

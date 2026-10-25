@@ -71,9 +71,23 @@ its result. Tools should not reimplement any of that.
 ## Configuration
 
 - `next.config.ts` — `output: "export"`, `trailingSlash: true` for Cloudflare Pages.
-- `src/lib/site.ts` — canonical URL and site metadata.
+- `src/lib/site.ts` — canonical URL and site metadata. The UI is Simplified
+  Chinese; copy lives in the tool registry, the glossary, and each
+  `src/app/<slug>/client.tsx`, with no i18n layer.
 - `src/lib/tools.ts` — the single source of truth for tools, nav, SEO and sitemaps.
 - `public/_headers` — caching and content types on Cloudflare Pages.
+
+The two fonts are self-hosted: `src/app/jetbrains-mono-latin.woff2` (latin
+subset, loaded through `next/font/local` in `layout.tsx`) and
+`src/app/vcr-osd-mono.ttf`. Nothing in the build touches Google Fonts, so
+`pnpm build` works offline. Chinese glyphs come from the system stack
+(`Microsoft YaHei`, `PingFang SC`, …) declared in `globals.css`.
+
+`getFFmpeg()` fetches `/ffmpeg/ffmpeg-core.wasm.gz?v=1`. The query string is
+load-bearing: Edge classifies a URL that ends in `.gz` as a download, answers
+the fetch with an empty 204, and drops the file into the user's Downloads
+folder. Keep the query (bump it when the core changes) and keep the
+cache-bypassing retry that follows it.
 
 ## Conventions
 

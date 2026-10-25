@@ -38,7 +38,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         if (info.width) setWidth(Math.min(info.width, 480));
       })
       .catch(() => {
-        if (!cancelled) setError("Could not read the video. It may be an unsupported format.");
+        if (!cancelled) setError("无法读取该视频，可能是不支持的格式。");
       });
     return () => {
       cancelled = true;
@@ -55,10 +55,10 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     max == null ? duration : Math.max(0, Math.min(end, max) - Math.min(start, max));
 
   const go = () =>
-    run("Encoding GIF", async () => {
-      if (!file) throw new Error("Choose a video first.");
+    run("正在生成 GIF", async () => {
+      if (!file) throw new Error("请先选择视频。");
       if (outDuration <= 0) {
-        throw new Error("Pick a range inside the video — end must be after start.");
+        throw new Error("请选择视频内的范围：结束时间必须晚于开始时间。");
       }
       const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
       const out = await ffmpegOnce(
@@ -83,7 +83,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       publish({
         data: out,
         ext: "gif",
-        note: `${start}s +${outDuration}s @ ${fps}fps ${width}px ${colors} colors`,
+        note: `${start}s +${outDuration}s @ ${fps}fps ${width}px ${colors} 种颜色`,
       });
     });
 
@@ -93,14 +93,14 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       <p role="status" aria-live="polite" className="text-ui text-muted-foreground">
         {file
           ? source
-            ? `Source: ${source.width ?? "?"}px wide, ${max ? `${max.toFixed(2)}s` : "unknown"} long.`
-            : "Reading the video…"
-          : "No video chosen yet."}
+            ? `源文件：宽 ${source.width ?? "?"} px，时长 ${max ? `${max.toFixed(2)} s` : "未知"}。`
+            : "正在读取视频…"
+          : "尚未选择视频。"}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="v2g-start">start time (seconds)</Label>
+          <Label htmlFor="v2g-start">开始时间（秒）</Label>
           <Input
             id="v2g-start"
             type="number"
@@ -112,7 +112,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         </div>
         <div>
-          <Label htmlFor="v2g-end">end time (seconds)</Label>
+          <Label htmlFor="v2g-end">结束时间（秒）</Label>
           <Input
             id="v2g-end"
             type="number"
@@ -124,14 +124,14 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             aria-describedby="v2g-end-hint"
           />
           <p id="v2g-end-hint" className="text-label text-muted-foreground mt-1">
-            {outDuration > 0 ? `${outDuration.toFixed(2)}s of GIF` : "End must be after start"}
+            {outDuration > 0 ? `${outDuration.toFixed(2)} s 的 GIF` : "结束时间必须晚于开始时间"}
           </p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Range
-          label="frame rate"
+          label="帧率"
           suffix=" fps"
           min={5}
           max={30}
@@ -140,7 +140,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           onChange={(e) => setFps(Number(e.target.value))}
         />
         <div>
-          <Label htmlFor="v2g-width">output width (px)</Label>
+          <Label htmlFor="v2g-width">输出宽度（px）</Label>
           <Input
             id="v2g-width"
             type="number"
@@ -152,13 +152,13 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             aria-describedby="v2g-width-hint"
           />
           <p id="v2g-width-hint" className="text-label text-muted-foreground mt-1">
-            Height follows the aspect ratio.
+            高度按比例自动计算。
           </p>
         </div>
       </div>
 
       <Range
-        label="max colors"
+        label="最大颜色数"
         min={2}
         max={256}
         step={2}
@@ -167,7 +167,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       />
 
       <Checkbox
-        label="Dither (smoother gradients, larger file)"
+        label="抖动（渐变更平滑，文件更大）"
         checked={dither}
         onChange={(e) => setDither(e.target.checked)}
       />
@@ -175,11 +175,11 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       <Readout
         rows={
           [
-            ["size", outHeight ? `${width} × ${outHeight} px` : `${width} px × auto`],
-            ["format", ".gif"],
-            ["frame rate", `${fps} fps`],
-            ["colors", `up to ${colors}${dither ? ", dithered" : ""}`],
-            ["duration", `${outDuration.toFixed(2)} s`],
+            ["尺寸", outHeight ? `${width} × ${outHeight} px` : `${width} px × 自动`],
+            ["格式", ".gif"],
+            ["帧率", `${fps} fps`],
+            ["颜色", `最多 ${colors}${dither ? "，已抖动" : ""}`],
+            ["时长", `${outDuration.toFixed(2)} s`],
           ] as const
         }
       />
@@ -193,7 +193,7 @@ export default function VideoToGifTool() {
       tool={tool}
       accept="video/*"
       defaultName="video"
-      hint="Pick a range, a frame rate and a width. A two-pass palette encode keeps colours clean."
+      hint="选择时间范围、帧率和宽度。两遍调色板编码能让颜色更干净。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

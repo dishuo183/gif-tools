@@ -22,8 +22,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   React.useEffect(() => setThumbs([]), [file]);
 
   const go = () =>
-    run("Extracting frames", async () => {
-      if (!file) throw new Error("Choose an animated GIF or WebP first.");
+    run("正在提取帧", async () => {
+      if (!file) throw new Error("请先选择动图 GIF 或 WebP。");
       const ext = file.name.split(".").pop()?.toLowerCase() || "gif";
       const input = `in.${ext}`;
       await withFFmpeg(async (ff) => {
@@ -32,14 +32,14 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           setProgress(0.2);
           const code = await ff.exec(["-i", input, "-vsync", "0", "frame-%04d.png"]);
           if (code !== 0)
-            throw new Error("ffmpeg could not decode that file. Is it a real GIF or WebP?");
+            throw new Error("ffmpeg 无法解码该文件。它确实是 GIF 或 WebP 吗？");
 
           const names = await frameNames(ff);
           if (names.length === 0)
-            throw new Error("No frames came out — the file may have no image data.");
+            throw new Error("没有提取到帧，文件可能不含图像数据。");
           if (names.length > MAX_FRAMES) {
             throw new Error(
-              `That file has ${names.length} frames; the limit is ${MAX_FRAMES}. Trim it first.`,
+              `该文件有 ${names.length} 帧，上限为 ${MAX_FRAMES} 帧。请先剪切。`,
             );
           }
 
@@ -48,7 +48,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           const urls: string[] = [];
           for (const name of names) {
             const data = await ff.readFile(name);
-            if (typeof data === "string") throw new Error(`Unexpected text output for ${name}.`);
+            if (typeof data === "string") throw new Error(`${name} 输出了意外的文本内容。`);
             const bytes = data as Uint8Array;
             files[name] = bytes;
             urls.push(
@@ -63,7 +63,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
             data: zipSync(files),
             ext: "zip",
             mime: "application/zip",
-            note: `${names.length} frames as PNG`,
+            note: `${names.length} 帧 PNG`,
           });
           setProgress(1);
         } finally {
@@ -88,7 +88,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       <div role="status" aria-live="polite">
         {thumbs.length ? (
           <p className="text-ui text-[hsl(var(--smui-green))] mb-2">
-            {thumbs.length} frames extracted. Download the ZIP on the right.
+            已提取 {thumbs.length} 帧。在右侧下载 ZIP 文件。
           </p>
         ) : null}
       </div>
@@ -116,7 +116,7 @@ export default function SplitTool() {
       tool={tool}
       accept="image/gif,image/webp,image/apng,image/png,video/*"
       defaultName="frames"
-      hint="Every frame is decoded to a lossless PNG and packed into a ZIP."
+      hint="每一帧都会解码为无损 PNG，并打包成 ZIP。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

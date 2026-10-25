@@ -14,16 +14,32 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Slack emoji/upload friendly filename: lowercase, dashes, no surprises. */
-export function slugify(s: string, fallback = "output"): string {
+/**
+ * Slack 表情/上传友好的文件名：小写、连字符、没有意外字符。
+ *
+ * 默认保留中日韩文字，因为中文用户输入中文文件名是很正常的；`slackSlug`
+ * 是只留 ASCII 的版本，Slack 表情名只接受小写字母、数字、连字符和下划线。
+ */
+const CJK_RANGES = "\\u3400-\\u4dbf\\u4e00-\\u9fff\\u3040-\\u30ff\\uac00-\\ud7af\\uf900-\\ufaff";
+
+function baseSlug(s: string, allowed: string, fallback: string): string {
   const out = s
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(new RegExp(`[^a-z0-9${allowed}]+`, "g"), "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
   return out || fallback;
+}
+
+export function slugify(s: string, fallback = "output"): string {
+  return baseSlug(s, CJK_RANGES, fallback);
+}
+
+/** 只留 ASCII 的版本，用于 Slack 表情名。 */
+export function slackSlug(s: string, fallback = "output"): string {
+  return baseSlug(s, "", fallback);
 }
 
 /**

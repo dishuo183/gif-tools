@@ -29,8 +29,8 @@ interface EffectDef {
 const EFFECTS: EffectDef[] = [
   {
     id: "spin",
-    name: "Spin",
-    amount: { label: "turns per loop", min: 1, max: 4, step: 1, def: 1, suffix: "×" },
+    name: "旋转",
+    amount: { label: "每循环圈数", min: 1, max: 4, step: 1, def: 1, suffix: "×" },
     fit: 0.72,
     frames: 12,
     delay: 60,
@@ -38,48 +38,48 @@ const EFFECTS: EffectDef[] = [
   },
   {
     id: "bounce",
-    name: "Bounce",
-    amount: { label: "bounce height", min: 5, max: 60, step: 1, def: 25, suffix: "%" },
+    name: "弹跳",
+    amount: { label: "弹跳高度", min: 5, max: 60, step: 1, def: 25, suffix: "%" },
     fit: 0.78,
     frames: 12,
     delay: 60,
   },
   {
     id: "zoom",
-    name: "Zoom / pulse",
-    amount: { label: "zoom amount", min: 5, max: 60, step: 1, def: 25, suffix: "%" },
+    name: "缩放 / 脉动",
+    amount: { label: "缩放幅度", min: 5, max: 60, step: 1, def: 25, suffix: "%" },
     fit: 0.78,
     frames: 12,
     delay: 60,
   },
   {
     id: "wiggle",
-    name: "Wiggle",
-    amount: { label: "wiggle angle", min: 5, max: 90, step: 1, def: 20, suffix: "°" },
+    name: "摆动",
+    amount: { label: "摆动角度", min: 5, max: 90, step: 1, def: 20, suffix: "°" },
     fit: 0.82,
     frames: 10,
     delay: 55,
   },
   {
     id: "vibrate",
-    name: "Vibrate",
-    amount: { label: "vibration", min: 1, max: 12, step: 1, def: 3, suffix: "%" },
+    name: "振动",
+    amount: { label: "振动幅度", min: 1, max: 12, step: 1, def: 3, suffix: "%" },
     fit: 1,
     frames: 6,
     delay: 30,
   },
   {
     id: "rainbow",
-    name: "Rainbow",
-    amount: { label: "hue sweep", min: 10, max: 100, step: 5, def: 100, suffix: "%" },
+    name: "彩虹",
+    amount: { label: "色相扫过", min: 10, max: 100, step: 5, def: 100, suffix: "%" },
     fit: 1,
     frames: 12,
     delay: 70,
   },
   {
     id: "roll",
-    name: "Roll",
-    amount: { label: "travel", min: 20, max: 150, step: 5, def: 100, suffix: "%" },
+    name: "滚动",
+    amount: { label: "移动距离", min: 20, max: 150, step: 5, def: 100, suffix: "%" },
     fit: 0.7,
     frames: 16,
     delay: 55,
@@ -87,16 +87,16 @@ const EFFECTS: EffectDef[] = [
   },
   {
     id: "shake",
-    name: "Shake",
-    amount: { label: "shake amount", min: 2, max: 25, step: 1, def: 9, suffix: "%" },
+    name: "抖动",
+    amount: { label: "抖动幅度", min: 2, max: 25, step: 1, def: 9, suffix: "%" },
     fit: 1,
     frames: 8,
     delay: 45,
   },
   {
     id: "slide",
-    name: "Slide in",
-    amount: { label: "hold at the end", min: 0, max: 70, step: 5, def: 35, suffix: "%" },
+    name: "滑入",
+    amount: { label: "末尾停留", min: 0, max: 70, step: 5, def: 35, suffix: "%" },
     fit: 0.9,
     frames: 14,
     delay: 55,
@@ -252,8 +252,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   };
 
   const go = () =>
-    run("Animating", async () => {
-      if (!img) throw new Error("Choose an image first.");
+    run("正在生成动效", async () => {
+      if (!img) throw new Error("请先选择一张图片。");
       setProgress(0.4);
       const data = renderFrames({ width: size, height: size }, count, (ctx, _t, i) =>
         drawFrame(ctx, frameAt(anim, i * delay), i % frames, settings),
@@ -275,7 +275,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           id="emo-effect-label"
           className="text-label text-muted-foreground tracking-[1.5px] uppercase block mb-1"
         >
-          effect
+          效果
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {EFFECTS.map((e) => (
@@ -295,7 +295,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div>
         <p className="text-label text-muted-foreground mt-1" role="status" aria-live="polite">
-          {def.name} — {frames} frames at {delay}ms
+          {def.name} — {frames} 帧，间隔 {delay}ms
         </p>
       </div>
 
@@ -311,37 +311,37 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       {def.dir === "rotation" ? (
         <div>
-          <Label htmlFor="emo-dir">rotation direction</Label>
+          <Label htmlFor="emo-dir">旋转方向</Label>
           <Select
             id="emo-dir"
             value={cw ? "cw" : "ccw"}
             onChange={(e) => setCw(e.target.value === "cw")}
           >
-            <option value="cw">Clockwise</option>
-            <option value="ccw">Anticlockwise</option>
+            <option value="cw">顺时针</option>
+            <option value="ccw">逆时针</option>
           </Select>
         </div>
       ) : null}
 
       {def.dir === "edge" ? (
         <div>
-          <Label htmlFor="emo-edge">slide in from</Label>
+          <Label htmlFor="emo-edge">滑入方向</Label>
           <Select
             id="emo-edge"
             value={edge}
             onChange={(e) => setEdge(e.target.value as Settings["edge"])}
           >
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="top">Top</option>
-            <option value="bottom">Bottom</option>
+            <option value="left">左侧</option>
+            <option value="right">右侧</option>
+            <option value="top">顶部</option>
+            <option value="bottom">底部</option>
           </Select>
         </div>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Range
-          label="frames"
+          label="帧数"
           min={2}
           max={32}
           step={1}
@@ -349,7 +349,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           onChange={(e) => setFrames(Number(e.target.value))}
         />
         <Range
-          label="frame delay"
+          label="帧延迟"
           suffix="ms"
           min={20}
           max={200}
@@ -361,15 +361,15 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="emo-size">output size</Label>
+          <Label htmlFor="emo-size">输出尺寸</Label>
           <Select id="emo-size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
             <option value={32}>32 × 32</option>
             <option value={64}>64 × 64</option>
-            <option value={128}>128 × 128 — Slack emoji</option>
+            <option value={128}>128 × 128 — Slack 表情</option>
             <option value={256}>256 × 256</option>
           </Select>
         </div>
-        <ColorField id="emo-bg" label="background colour" value={bg} onChange={setBg} clearable />
+        <ColorField id="emo-bg" label="背景颜色" value={bg} onChange={setBg} clearable />
       </div>
     </>
   );
@@ -381,7 +381,7 @@ export default function EmojifyTool() {
       tool={tool}
       accept="image/png,image/jpeg,image/webp,image/gif"
       defaultName="emoji"
-      hint="Pick an effect; the result updates as you go. Each effect loads its own tempo, which you can then override."
+      hint="选择一个效果，结果会随设置自动更新。每个效果都自带节奏，之后仍可手动覆盖。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

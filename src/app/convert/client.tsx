@@ -11,12 +11,12 @@ const tool = getTool("convert");
 type Target = "gif" | "png" | "jpg" | "webp" | "apng" | "bmp";
 
 const TARGETS: { value: Target; label: string; animated: boolean; quality: boolean }[] = [
-  { value: "gif", label: "GIF — animated", animated: true, quality: false },
-  { value: "webp", label: "WebP — animated or still", animated: true, quality: true },
-  { value: "apng", label: "APNG — animated PNG", animated: true, quality: false },
-  { value: "png", label: "PNG — still, lossless", animated: false, quality: false },
-  { value: "jpg", label: "JPEG — still, lossy", animated: false, quality: true },
-  { value: "bmp", label: "BMP — still, uncompressed", animated: false, quality: false },
+  { value: "gif", label: "GIF —— 动图", animated: true, quality: false },
+  { value: "webp", label: "WebP —— 动图或静图", animated: true, quality: true },
+  { value: "apng", label: "APNG —— 动图 PNG", animated: true, quality: false },
+  { value: "png", label: "PNG —— 静图，无损", animated: false, quality: false },
+  { value: "jpg", label: "JPEG —— 静图，有损", animated: false, quality: true },
+  { value: "bmp", label: "BMP —— 静图，未压缩", animated: false, quality: false },
 ];
 
 const ANIMATED_SOURCES = /\.(gif|webp|apng|png|mp4|webm|mov|avi|mkv)$/i;
@@ -37,31 +37,31 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const canAnimate = spec.animated && !!file && ANIMATED_SOURCES.test(file.name);
   const keepAnimation = canAnimate && animate;
   // No scale filter anywhere in this tool, so the pixels come out as they went in.
-  const size = source ? `${source.w} × ${source.h} px` : file ? "reading…" : "—";
+  const size = source ? `${source.w} × ${source.h} px` : file ? "读取中…" : "—";
   const qualityWords =
     quality >= 90
-      ? "near-lossless, largest file"
+      ? "接近无损，文件最大"
       : quality >= 70
-        ? "sharp detail"
+        ? "细节锐利"
         : quality >= 45
-          ? "visible softening"
-          : "small file, blocky";
+          ? "可见变软"
+          : "文件小，有块状感";
   const readout: [string, string][] = [
-    ["size", size],
-    ["format", `.${target}`],
+    ["尺寸", size],
+    ["格式", `.${target}`],
     [
-      "animation",
-      keepAnimation ? "kept if the source has more than one frame" : "first frame only",
+      "动画",
+      keepAnimation ? "源文件多于 1 帧时保留" : "仅保留第一帧",
     ],
   ];
-  if (spec.quality) readout.push(["quality", `${quality} — ${qualityWords}`]);
+  if (spec.quality) readout.push(["质量", `${quality} —— ${qualityWords}`]);
   // The single-frame GIF path has no palettegen stage, so `colors` does nothing there.
   else if (target === "gif")
-    readout.push(["colors", keepAnimation ? `up to ${colors}` : "not used for one frame"]);
+    readout.push(["颜色", keepAnimation ? `最多 ${colors}` : "单帧不使用"]);
 
   const go = () =>
-    run(`Converting to ${target.toUpperCase()}`, async () => {
-      if (!file) throw new Error("Choose an image first.");
+    run(`正在转换为 ${target.toUpperCase()}`, async () => {
+      if (!file) throw new Error("请先选择图片。");
       const ext = file.name.split(".").pop()?.toLowerCase() || "png";
       const still = keepAnimation ? [] : ["-frames:v", "1"];
       // JPEG's q:v runs 2 (best) to 31 (worst) — invert the friendly slider.
@@ -108,7 +108,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       publish({
         data: out,
         ext: target,
-        note: `${ext} → ${target}${keepAnimation ? " (animated)" : ""}`,
+        note: `${ext} → ${target}${keepAnimation ? "（动图）" : ""}`,
       });
     });
 
@@ -117,7 +117,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="cv-target">output format</Label>
+          <Label htmlFor="cv-target">输出格式</Label>
           <Select
             id="cv-target"
             value={target}
@@ -132,7 +132,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         </div>
         {spec.quality ? (
           <Range
-            label="quality"
+            label="质量"
             min={1}
             max={100}
             step={1}
@@ -141,7 +141,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         ) : target === "gif" ? (
           <Range
-            label="max colors"
+            label="最大颜色数"
             min={2}
             max={256}
             step={2}
@@ -153,15 +153,15 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       {canAnimate ? (
         <Checkbox
-          label="Keep animation (uncheck for just the first frame)"
+          label="保留动画（取消勾选则只保留第一帧）"
           checked={animate}
           onChange={(e) => setAnimate(e.target.checked)}
         />
       ) : (
         <p role="status" aria-live="polite" className="text-label text-muted-foreground">
           {spec.animated
-            ? "This output can animate, but the source is a still image."
-            : `${target.toUpperCase()} is a still format — only the first frame is kept.`}
+            ? "该输出格式支持动画，但源文件是静态图片。"
+            : `${target.toUpperCase()} 是静态格式，只保留第一帧。`}
         </p>
       )}
 
@@ -176,7 +176,7 @@ export default function ConvertTool() {
       tool={tool}
       accept="image/gif,image/png,image/jpeg,image/webp,image/bmp,image/apng,video/*"
       defaultName="converted"
-      hint="Animation survives whenever both the source and the target support it."
+      hint="只要源文件和目标格式都支持动画，动画就会保留。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

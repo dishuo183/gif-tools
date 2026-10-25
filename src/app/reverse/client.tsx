@@ -7,7 +7,7 @@ import { getTool } from "@/lib/tools";
 
 const tool = getTool("reverse");
 
-const secs = (v: number) => `${v.toFixed(2)}s`;
+const secs = (v: number) => `${v.toFixed(2)} 秒`;
 
 function outputExt(file: File): "gif" | "webm" | "mp4" {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
@@ -50,8 +50,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   }, [file]);
 
   const go = () =>
-    run(mode === "boomerang" ? "Building boomerang" : "Reversing", async () => {
-      if (!file) throw new Error("Choose a GIF or video first.");
+    run(mode === "boomerang" ? "正在生成往返" : "正在倒放", async () => {
+      if (!file) throw new Error("请先选择 GIF 或视频。");
 
       const ext = outputExt(file);
       const srcExt = file.name.split(".").pop()?.toLowerCase() || "bin";
@@ -79,7 +79,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         { onProgress: (r) => setProgress(r) },
       ).catch((err: unknown) => {
         throw new Error(
-          `ffmpeg could not reverse this file (${err instanceof Error ? err.message : String(err)}). Reversing buffers every frame in memory — trim the clip down and try again.`,
+          `ffmpeg 无法倒放该文件（${err instanceof Error ? err.message : String(err)}）。倒放需要把所有帧读入内存——请先剪短片段再试。`,
         );
       });
 
@@ -91,34 +91,33 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   // 2n-1 frames: twice the length, one frame short.
   const headline = duration
     ? mode === "boomerang"
-      ? `${secs(duration)} \u2192 ${secs(duration * 2)} (one frame less)`
+      ? `${secs(duration)} \u2192 ${secs(duration * 2)}（少一帧）`
       : `${secs(duration)} \u2192 ${secs(duration)}`
     : mode === "boomerang"
-      ? "Roughly twice the source length"
-      : "Same length as the source";
+      ? "约为原时长的两倍"
+      : "与原时长相同";
   const detail =
     mode === "boomerang"
-      ? "Forward, then backwards: about twice the frames, minus the duplicated turnaround frame."
-      : "Every frame is kept, played back to front: same frame count, same length.";
+      ? "先正放再倒放：帧数约为两倍，减去重复的转折帧。"
+      : "保留每一帧，从后往前播放：帧数与时长都不变。";
 
   useAutoRun(go, [file, mode], !!file);
   return (
     <>
       <div>
-        <Label htmlFor="reverse-mode">direction</Label>
+        <Label htmlFor="reverse-mode">方向</Label>
         <Select
           id="reverse-mode"
           value={mode}
           onChange={(e) => setMode(e.target.value as "reverse" | "boomerang")}
         >
-          <option value="reverse">Reverse — play backwards</option>
-          <option value="boomerang">Boomerang — forward, then back</option>
+          <option value="reverse">倒放 — 从后往前播放</option>
+          <option value="boomerang">往返 — 先正放再倒放</option>
         </Select>
       </div>
 
       <p className="text-ui text-muted-foreground">
-        Reversing has to load every frame into memory at once, so very long or very large inputs can
-        run out of memory and fail. Cut the clip down first if that happens.
+        倒放需要一次性把所有帧载入内存，因此过长或过大的输入可能耗尽内存而失败。遇到这种情况请先剪短片段。
       </p>
 
       <div
@@ -126,7 +125,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         aria-live="polite"
         className="border border-border bg-smui-surface-0 p-3 grid gap-1"
       >
-        <span className="text-label uppercase tracking-wider text-muted-foreground">result</span>
+        <span className="text-label uppercase tracking-wider text-muted-foreground">结果</span>
         <p className="text-ui text-foreground tabular-nums">{headline}</p>
         <p className="text-label text-muted-foreground tabular-nums">{detail}</p>
       </div>
@@ -140,7 +139,7 @@ export default function ReverseTool() {
       tool={tool}
       accept="image/gif,video/*"
       defaultName="reversed"
-      hint="A GIF stays a GIF and a video stays a video. Audio is dropped."
+      hint="GIF 仍是 GIF，视频仍是视频。音频会被丢弃。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

@@ -32,26 +32,26 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const lossless = key === "png";
   const qualityWords =
     quality >= 90
-      ? "near-lossless, largest file"
+      ? "接近无损，文件最大"
       : quality >= 75
-        ? "sharp detail"
+        ? "细节清晰"
         : quality >= 50
-          ? "visible softening"
-          : "small file, blocky";
+          ? "可见的柔化"
+          : "文件更小，有块状感";
 
   const go = () =>
-    run("Compressing", async () => {
+    run("正在压缩", async () => {
       setSaving(null); // a failed run must not leave the last file's result on screen
-      if (!file) throw new Error("Choose a PNG, JPEG or WebP first.");
+      if (!file) throw new Error("请先选择一个 PNG、JPEG 或 WebP 文件。");
       const target = FORMATS[key];
       setProgress(0.3);
       const out = await compressImage(file, { format: target.format, quality, strip });
       setProgress(1);
       const pct = Math.round((1 - out.length / file.size) * 100);
       setSaving({
-        text: `${formatBytes(file.size)} → ${formatBytes(out.length)} (${
-          pct >= 0 ? `${pct}% smaller` : `${-pct}% larger`
-        })`,
+        text: `${formatBytes(file.size)} → ${formatBytes(out.length)}（${
+          pct >= 0 ? `${pct}% 缩小` : `${-pct}% 增大`
+        }）`,
         pct,
       });
       publish({
@@ -66,15 +66,15 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="cmp-format">output format</Label>
+          <Label htmlFor="cmp-format">输出格式</Label>
           <Select id="cmp-format" value={key} onChange={(e) => setKey(e.target.value as FormatKey)}>
-            <option value="jpeg">JPEG — smallest, no transparency</option>
-            <option value="png">PNG — lossless, keeps transparency</option>
-            <option value="webp">WebP — small, keeps transparency</option>
+            <option value="jpeg">JPEG — 文件最小，不支持透明</option>
+            <option value="png">PNG — 无损，保留透明</option>
+            <option value="webp">WebP — 文件较小，保留透明</option>
           </Select>
         </div>
         <Range
-          label="quality"
+          label="质量"
           min={1}
           max={100}
           step={1}
@@ -84,7 +84,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       </div>
 
       <Checkbox
-        label="Strip metadata (EXIF, colour profile, comments)"
+        label="移除元数据（EXIF、色彩配置文件、注释）"
         checked={strip}
         onChange={(e) => setStrip(e.target.checked)}
       />
@@ -93,12 +93,12 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         rows={
           [
             [
-              "size",
-              dims ? `${dims.w} × ${dims.h} px` : !file ? "—" : failed ? "unknown" : "reading…",
+              "尺寸",
+              dims ? `${dims.w} × ${dims.h} px` : !file ? "—" : failed ? "未知" : "读取中…",
             ],
-            ["format", `.${FORMATS[key].ext}`],
-            ["quality", lossless ? "lossless — quality not used" : `${quality} — ${qualityWords}`],
-            ["metadata", strip ? "stripped" : "kept"],
+            ["格式", `.${FORMATS[key].ext}`],
+            ["质量", lossless ? "无损 — 不使用质量设置" : `${quality} — ${qualityWords}`],
+            ["元数据", strip ? "已移除" : "保留"],
           ] as const
         }
       />
@@ -124,7 +124,7 @@ export default function CompressTool() {
       tool={tool}
       accept="image/png,image/jpeg,image/webp"
       defaultName="compressed"
-      hint="Re-encodes a still image with ImageMagick. Quality only affects JPEG and WebP; PNG stays lossless."
+      hint="用 ImageMagick 重新编码静态图片。质量设置只对 JPEG 和 WebP 生效，PNG 始终无损。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

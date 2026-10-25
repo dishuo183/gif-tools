@@ -20,27 +20,27 @@ interface Style {
 const PRESETS: { id: string; label: string; style: Style }[] = [
   {
     id: "classic",
-    label: "classic 100",
+    label: "经典 100",
     style: { fill: "#dd2e44", fill2: "#dd2e44", stroke: "", glow: false },
   },
   {
     id: "gold",
-    label: "gold",
+    label: "金色",
     style: { fill: "#ffd76b", fill2: "#c07a06", stroke: "#40260a", glow: false },
   },
   {
     id: "neon",
-    label: "neon",
+    label: "霓虹",
     style: { fill: "#4dfff0", fill2: "#4dfff0", stroke: "", glow: true },
   },
   {
     id: "outlined",
-    label: "outlined",
+    label: "描边",
     style: { fill: "#ffffff", fill2: "#ffffff", stroke: "#101418", glow: false },
   },
   {
     id: "sunset",
-    label: "gradient",
+    label: "渐变",
     style: { fill: "#ffb02e", fill2: "#ff2e88", stroke: "", glow: false },
   },
 ];
@@ -48,6 +48,13 @@ const PRESETS: { id: string; label: string; style: Style }[] = [
 type Underline = "none" | "single" | "double";
 const ANIMS = ["pulse", "shake", "rainbow"] as const;
 type Anim = (typeof ANIMS)[number];
+
+/** Display names for the animation toggles; the ids stay as-is. */
+const ANIM_LABEL: Record<Anim, string> = {
+  pulse: "脉动",
+  shake: "抖动",
+  rainbow: "彩虹",
+};
 
 interface Opts extends Style {
   text: string;
@@ -205,18 +212,18 @@ function Body({
   optsRef.current = opts;
 
   const go = () =>
-    run("Rendering", async () => {
-      if (!text.trim()) throw new Error("Type a number or short label to render first.");
+    run("正在渲染", async () => {
+      if (!text.trim()) throw new Error("请先输入数字或短文字。");
       const o = optsRef.current;
       if (format === "png") {
         const c = document.createElement("canvas");
         c.width = c.height = size;
         const ctx = c.getContext("2d");
-        if (!ctx) throw new Error("Your browser blocked the 2D canvas this tool needs.");
+        if (!ctx) throw new Error("浏览器阻止了此工具所需的 2D Canvas。");
         draw(ctx, size, { ...o, anims: [] }, 0);
         setProgress(0.6);
         const blob = await new Promise<Blob | null>((res) => c.toBlob(res, "image/png"));
-        if (!blob) throw new Error("The browser could not encode the PNG. Try a smaller size.");
+        if (!blob) throw new Error("浏览器无法编码这张 PNG。请尝试更小的尺寸。");
         publish({
           data: new Uint8Array(await blob.arrayBuffer()),
           ext: "png",
@@ -246,7 +253,7 @@ function Body({
   return (
     <>
       <div>
-        <Label htmlFor="num-text">number or short label</Label>
+        <Label htmlFor="num-text">数字或短文字</Label>
         <Input
           id="num-text"
           value={text}
@@ -256,13 +263,13 @@ function Body({
           aria-describedby="num-text-hint"
         />
         <p id="num-text-hint" className="text-label text-muted-foreground mt-1">
-          Up to 6 characters. Longer values shrink to fit the square.
+          最多 6 个字符。内容更长时会自动缩小以适配方形。
         </p>
       </div>
 
       <fieldset>
         <legend className="text-label text-muted-foreground tracking-[1.5px] uppercase mb-1">
-          style preset
+          样式预设
         </legend>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((p) => (
@@ -283,7 +290,7 @@ function Body({
       <div className="grid gap-4 sm:grid-cols-2">
         <ColorField
           id="num-fill"
-          label="colour"
+          label="颜色"
           value={style.fill}
           onChange={(v) => {
             setStyle((s) => ({ ...s, fill: v, fill2: v }));
@@ -291,15 +298,15 @@ function Body({
           }}
         />
         <div>
-          <Label htmlFor="num-underline">underline</Label>
+          <Label htmlFor="num-underline">下划线</Label>
           <Select
             id="num-underline"
             value={underline}
             onChange={(e) => setUnderline(e.target.value as Underline)}
           >
-            <option value="none">none</option>
-            <option value="single">single</option>
-            <option value="double">double — the 100 look</option>
+            <option value="none">无</option>
+            <option value="single">单线</option>
+            <option value="double">双线——100 样式</option>
           </Select>
         </div>
       </div>
@@ -307,7 +314,7 @@ function Body({
       <div className="grid gap-4 sm:grid-cols-2">
         {underline !== "none" ? (
           <Range
-            label="underline thickness"
+            label="下划线粗细"
             min={3}
             max={20}
             value={thick}
@@ -318,33 +325,33 @@ function Body({
           <div />
         )}
         <div>
-          <Label htmlFor="num-font">typeface</Label>
+          <Label htmlFor="num-font">字体</Label>
           <Select id="num-font" value={face} onChange={(e) => setFace(e.target.value as FaceId)}>
             {faceOptions("caveat")}
           </Select>
         </div>
         <div>
-          <Label htmlFor="num-size">size</Label>
+          <Label htmlFor="num-size">尺寸</Label>
           <Select id="num-size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
             <option value={64}>64 × 64</option>
-            <option value={128}>128 × 128 — Slack</option>
+            <option value={128}>128 × 128 — Slack 表情</option>
             <option value={256}>256 × 256</option>
           </Select>
         </div>
       </div>
 
       <div className="grid gap-3">
-        <Checkbox label="Italic" checked={italic} onChange={(e) => setItalic(e.target.checked)} />
-        <ColorField id="num-bg" label="background colour" value={bg} onChange={setBg} clearable />
+        <Checkbox label="斜体" checked={italic} onChange={(e) => setItalic(e.target.checked)} />
+        <ColorField id="num-bg" label="背景颜色" value={bg} onChange={setBg} clearable />
       </div>
 
       <div>
-        <Label>animation</Label>
+        <Label>动画</Label>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           {ANIMS.map((a) => (
             <Checkbox
               key={a}
-              label={a}
+              label={ANIM_LABEL[a]}
               checked={anims.includes(a)}
               onChange={(e) =>
                 setAnims(e.target.checked ? [...anims, a] : anims.filter((x) => x !== a))
@@ -353,7 +360,7 @@ function Body({
           ))}
         </div>
         <p className="text-label text-muted-foreground mt-1">
-          Tick any to get an animated GIF; none gives a static PNG.
+          勾选任意一项即可生成 GIF 动画；全不选则输出静态 PNG。
         </p>
       </div>
     </>
@@ -372,7 +379,7 @@ export default function NumberTool() {
       defaultName="number"
       suggestedName={text}
       suggestedExt={format}
-      hint="Type a number, pick a style and download it. The text auto-shrinks to fit the square, so 1000 works as well as 100."
+      hint="输入一个数字，选好样式后下载。文字会自动缩小以适配方形，所以 1000 和 100 一样好用。"
     >
       {(props) => (
         <Body {...props} text={text} setText={setText} anims={anims} setAnims={setAnims} />

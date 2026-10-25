@@ -7,7 +7,7 @@ import { getTool } from "@/lib/tools";
 
 const tool = getTool("speed");
 
-const secs = (v: number) => `${v.toFixed(2)}s`;
+const secs = (v: number) => `${v.toFixed(2)} 秒`;
 
 // GIF frame delays are whole hundredths of a second and browsers clamp anything
 // under 2cs to 10cs, so a GIF that asks for more than 50fps plays back *slower*.
@@ -68,13 +68,13 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     multiplier * (srcFps ?? REF_FPS) > GIF_MAX_FPS;
 
   const go = () =>
-    run("Changing speed", async () => {
-      if (!file) throw new Error("Choose a GIF or video first.");
+    run("正在调整速度", async () => {
+      if (!file) throw new Error("请先选择 GIF 或视频。");
       if (mode === "multiplier" && !(multiplier >= 0.1 && multiplier <= 10)) {
-        throw new Error("Speed multiplier must be between 0.1x and 10x.");
+        throw new Error("速度倍率必须在 0.1x 到 10x 之间。");
       }
       if (mode === "fps" && !(fps >= 1 && fps <= 60)) {
-        throw new Error("Target frame rate must be between 1 and 60 fps.");
+        throw new Error("目标帧率必须在每秒 1 到 60 帧之间。");
       }
 
       // Multiplier retimes existing frames; fps mode stamps a fixed interval
@@ -97,7 +97,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         { onProgress: (r) => setProgress(r) },
       ).catch((err: unknown) => {
         throw new Error(
-          `ffmpeg could not re-time this file (${err instanceof Error ? err.message : String(err)}). Try a shorter clip or a different input format.`,
+          `ffmpeg 无法调整该文件的时间（${err instanceof Error ? err.message : String(err)}）。请换更短的片段或不同的输入格式。`,
         );
       });
 
@@ -118,24 +118,24 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   let headline: string;
   let detail: string;
   if (badMultiplier || badFps) {
-    headline = "Out of range";
+    headline = "超出范围";
     detail = badMultiplier
-      ? "Speed multiplier must be between 0.1x and 10x."
-      : "Target frame rate must be between 1 and 60 fps.";
+      ? "速度倍率必须在 0.1x 到 10x 之间。"
+      : "目标帧率必须在每秒 1 到 60 帧之间。";
   } else if (mode === "multiplier") {
     headline = duration
       ? `${secs(duration)} → ${secs(duration / multiplier)}`
-      : `Length ÷ ${multiplier}`;
+      : `时长 ÷ ${multiplier}`;
     detail = drop
-      ? `Frame rate forced to ${dropFps} fps (frames are dropped, the length above does not change).`
+      ? `帧率强制为每秒 ${dropFps} 帧（会丢弃部分帧，上面显示的时长不变）。`
       : capFps
-        ? `Frame rate capped at ${GIF_MAX_FPS} fps — a GIF cannot hold a frame for less than 2/100s, so anything faster would play slower instead.`
-        : `Frame rate ×${multiplier} — a 15 fps source plays at ${round1(15 * multiplier)} fps.`;
+        ? `帧率上限为每秒 ${GIF_MAX_FPS} 帧——GIF 单帧不能短于 2/100 秒，再快反而会变慢。`
+        : `帧率 ×${multiplier}——15 帧/秒的源文件会以 ${round1(15 * multiplier)} 帧/秒播放。`;
   } else {
-    headline = `Every frame held ${(1 / fps).toFixed(3)}s`;
-    detail = `New length is frame count ÷ ${fps} fps${
-      duration ? `, so it stays ${secs(duration)} only if the source is already ${fps} fps` : ""
-    }.`;
+    headline = `每帧停留 ${(1 / fps).toFixed(3)} 秒`;
+    detail = `新时长 = 帧数 ÷ ${fps} 帧/秒${
+      duration ? `，只有源文件本身就是 ${fps} 帧/秒时才会保持 ${secs(duration)}` : ""
+    }。`;
   }
 
   useAutoRun(go, [file, mode, multiplier, fps, drop, dropFps], !!file);
@@ -143,20 +143,20 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="speed-mode">mode</Label>
+          <Label htmlFor="speed-mode">模式</Label>
           <Select
             id="speed-mode"
             value={mode}
             onChange={(e) => setMode(e.target.value as "multiplier" | "fps")}
           >
-            <option value="multiplier">Speed multiplier</option>
-            <option value="fps">Target frame rate</option>
+            <option value="multiplier">速度倍率</option>
+            <option value="fps">目标帧率</option>
           </Select>
         </div>
 
         {mode === "multiplier" ? (
           <div>
-            <Label htmlFor="speed-multiplier">speed multiplier (0.1x – 10x)</Label>
+            <Label htmlFor="speed-multiplier">速度倍率（0.1x – 10x）</Label>
             <Input
               id="speed-multiplier"
               type="number"
@@ -168,12 +168,12 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
               aria-describedby="speed-multiplier-hint"
             />
             <p id="speed-multiplier-hint" className="text-label text-muted-foreground mt-1">
-              Above 1 is faster, below 1 is slower.
+              大于 1 变快，小于 1 变慢。
             </p>
           </div>
         ) : (
           <div>
-            <Label htmlFor="speed-fps">target frame rate</Label>
+            <Label htmlFor="speed-fps">目标帧率</Label>
             <Input
               id="speed-fps"
               type="number"
@@ -185,7 +185,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
               aria-describedby="speed-fps-hint"
             />
             <p id="speed-fps-hint" className="text-label text-muted-foreground mt-1">
-              Every frame is shown for 1/{fps || 1} of a second.
+              每帧显示 1/{fps || 1} 秒。
             </p>
           </div>
         )}
@@ -194,20 +194,20 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       {mode === "multiplier" ? (
         <div className="grid gap-3">
           <Checkbox
-            label="Drop frames to keep the file small"
+            label="丢弃部分帧以减小体积"
             checked={drop}
             onChange={(e) => setDrop(e.target.checked)}
           />
           {drop ? (
             <Range
               id="speed-drop-fps"
-              aria-label="frames per second after dropping"
-              label="frames per second after dropping"
+              aria-label="丢帧后的每秒帧数"
+              label="丢帧后的每秒帧数"
               min={2}
               max={30}
               step={1}
               value={dropFps}
-              suffix=" fps"
+              suffix=" 帧/秒"
               onChange={(e) => setDropFps(Number(e.target.value))}
             />
           ) : null}
@@ -219,7 +219,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         aria-live="polite"
         className="border border-border bg-smui-surface-0 p-3 grid gap-1"
       >
-        <span className="text-label uppercase tracking-wider text-muted-foreground">result</span>
+        <span className="text-label uppercase tracking-wider text-muted-foreground">结果</span>
         <p className="text-ui text-foreground tabular-nums">{headline}</p>
         <p className="text-label text-muted-foreground tabular-nums">{detail}</p>
       </div>
@@ -233,7 +233,7 @@ export default function SpeedTool() {
       tool={tool}
       accept="image/gif,video/*"
       defaultName="speed"
-      hint="Speeding up or slowing down keeps the original format — a GIF stays a GIF, a video stays a video. Audio is dropped."
+      hint="加速或减速都会保持原格式——GIF 仍是 GIF，视频仍是视频。音频会被丢弃。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

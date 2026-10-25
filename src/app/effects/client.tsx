@@ -251,11 +251,11 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   }, [frame, pw, ph, s, scale]);
 
   const go = () =>
-    run("Applying effects", async () => {
-      if (!file) throw new Error("Choose a GIF, image or video first.");
+    run("正在应用效果", async () => {
+      if (!file) throw new Error("请先选择一个 GIF、图片或视频。");
 
       if (ops.length === 0) {
-        throw new Error("Pick an effect or move an adjustment slider — nothing to apply yet.");
+        throw new Error("请选择一种效果或调整下面的滑块，目前没有可应用的操作。");
       }
 
       const filters = ffmpegFilters(ops);
@@ -277,7 +277,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         { onProgress: (r) => setProgress(r) },
       ).catch((err: unknown) => {
         throw new Error(
-          `ffmpeg could not apply these filters (${err instanceof Error ? err.message : String(err)}). Try a milder setting or a different input format.`,
+          `ffmpeg 无法应用这些滤镜（${err instanceof Error ? err.message : String(err)}）。请调低强度，或换一种输入格式再试。`,
         );
       });
 
@@ -289,27 +289,27 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="fx-effect">effect</Label>
+          <Label htmlFor="fx-effect">效果</Label>
           <Select
             id="fx-effect"
             value={s.effect}
             onChange={(e) => set("effect", e.target.value as Effect)}
           >
-            <option value="none">None</option>
-            <option value="grayscale">Grayscale</option>
-            <option value="sepia">Sepia</option>
-            <option value="invert">Invert</option>
-            <option value="blur">Blur</option>
-            <option value="sharpen">Sharpen</option>
-            <option value="posterize">Posterize</option>
+            <option value="none">无</option>
+            <option value="grayscale">灰度</option>
+            <option value="sepia">棕褐</option>
+            <option value="invert">反色</option>
+            <option value="blur">模糊</option>
+            <option value="sharpen">锐化</option>
+            <option value="posterize">色调分离</option>
           </Select>
         </div>
 
         {s.effect === "blur" || s.effect === "sharpen" ? (
           <Range
             id="fx-amount"
-            aria-label={s.effect === "blur" ? "blur radius" : "sharpen amount"}
-            label={s.effect === "blur" ? "blur radius" : "sharpen amount"}
+            aria-label={s.effect === "blur" ? "模糊半径" : "锐化强度"}
+            label={s.effect === "blur" ? "模糊半径" : "锐化强度"}
             min={s.effect === "blur" ? 1 : 0.5}
             max={s.effect === "blur" ? 20 : 5}
             step={s.effect === "blur" ? 1 : 0.5}
@@ -321,8 +321,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         {s.effect === "posterize" ? (
           <Range
             id="fx-levels"
-            aria-label="posterize levels"
-            label="posterize levels"
+            aria-label="色调分离级数"
+            label="色调分离级数"
             min={2}
             max={16}
             step={1}
@@ -335,8 +335,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       <div className="grid gap-3 sm:grid-cols-2">
         <Range
           id="fx-brightness"
-          aria-label="brightness"
-          label="brightness"
+          aria-label="亮度"
+          label="亮度"
           min={-1}
           max={1}
           step={0.05}
@@ -345,8 +345,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
         <Range
           id="fx-contrast"
-          aria-label="contrast"
-          label="contrast"
+          aria-label="对比度"
+          label="对比度"
           min={0}
           max={3}
           step={0.05}
@@ -355,8 +355,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
         <Range
           id="fx-saturation"
-          aria-label="saturation"
-          label="saturation"
+          aria-label="饱和度"
+          label="饱和度"
           min={0}
           max={3}
           step={0.05}
@@ -365,8 +365,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
         />
         <Range
           id="fx-hue"
-          aria-label="hue shift in degrees"
-          label="hue shift"
+          aria-label="色相偏移（度）"
+          label="色相偏移"
           min={-180}
           max={180}
           step={1}
@@ -379,7 +379,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       {frame ? (
         <div>
           <span className="text-label text-muted-foreground tracking-[1.5px] uppercase block mb-1">
-            live preview
+            实时预览
           </span>
           <div className="border-border flex justify-center border p-3">
             <canvas
@@ -388,11 +388,11 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
               height={ph}
               className="checkerboard border-border block max-w-full border"
               role="img"
-              aria-label={`First frame with the ${s.effect === "none" ? "current adjustments" : s.effect + " effect"} applied`}
+              aria-label={`首帧预览，效果：${s.effect === "none" ? "当前调整" : s.effect}`}
             />
           </div>
           <p className="text-label text-muted-foreground mt-1">
-            First frame only, updated as you drag. Apply effects to render the whole file.
+            仅显示首帧，拖动滑块时实时更新。应用效果后才会渲染整个文件。
           </p>
         </div>
       ) : null}
@@ -400,7 +400,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => setS(DEFAULTS)}>
           <RotateCcw aria-hidden="true" />
-          Reset to defaults
+          重置为默认值
         </Button>
       </div>
     </>
@@ -413,7 +413,7 @@ export default function EffectsTool() {
       tool={tool}
       accept="image/gif,image/png,image/jpeg,image/webp,video/*"
       defaultName="effects"
-      hint="One effect at a time, stacked with the brightness, contrast, saturation and hue sliders. Animation is kept; still images come back as PNG."
+      hint="一次只能选一种效果，可与亮度、对比度、饱和度和色相滑块叠加使用。动画会保留；静态图片输出为 PNG。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

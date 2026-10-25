@@ -22,7 +22,7 @@ export function encodeGif(
   frames: ImageData[],
   { delayMs, maxColors = 256, loop = 0, transparent = true }: EncodeOptions,
 ): Uint8Array {
-  if (!frames.length) throw new Error("encodeGif needs at least one frame");
+  if (!frames.length) throw new Error("GIF 编码至少需要一帧");
   const gif = GIFEncoder();
   const { width, height } = frames[0];
 
@@ -69,7 +69,7 @@ export function renderFrames(
   canvas.width = size.width;
   canvas.height = size.height;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) throw new Error("could not get a 2D canvas context");
+  if (!ctx) throw new Error("无法获取 2D 画布上下文");
 
   const frames: ImageData[] = [];
   for (let i = 0; i < count; i++) {
@@ -88,7 +88,7 @@ export async function loadImage(src: Blob | File | string): Promise<HTMLImageEle
     img.crossOrigin = "anonymous";
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
-      img.onerror = () => reject(new Error("could not decode that image"));
+      img.onerror = () => reject(new Error("无法解码这张图片"));
       img.src = url;
     });
     return img;

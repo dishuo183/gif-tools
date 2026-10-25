@@ -71,8 +71,8 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   };
 
   const go = () =>
-    run("Shaking", async () => {
-      if (!img) throw new Error("Choose an image first.");
+    run("正在抖动", async () => {
+      if (!img) throw new Error("请先选择一张图片。");
       setProgress(0.4);
       const data = renderFrames({ width: size, height: size }, count, (ctx, _t, i) =>
         drawFrame(ctx, frameAt(anim, i * delay), i % frames, settings),
@@ -91,27 +91,27 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="int-size">output size</Label>
+          <Label htmlFor="int-size">输出尺寸</Label>
           <Select id="int-size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
             <option value={32}>32 × 32</option>
             <option value={64}>64 × 64</option>
-            <option value={128}>128 × 128 — Slack emoji</option>
+            <option value={128}>128 × 128 — Slack 表情</option>
             <option value={256}>256 × 256</option>
           </Select>
         </div>
         <div>
-          <Label htmlFor="int-axes">shake direction</Label>
+          <Label htmlFor="int-axes">抖动方向</Label>
           <Select id="int-axes" value={axes} onChange={(e) => setAxes(e.target.value as Axes)}>
-            <option value="both">Both axes</option>
-            <option value="x">Horizontal only</option>
-            <option value="y">Vertical only</option>
+            <option value="both">双轴</option>
+            <option value="x">仅水平</option>
+            <option value="y">仅垂直</option>
           </Select>
         </div>
       </div>
 
       <Range
-        label="shake intensity"
-        suffix="% of size"
+        label="抖动强度"
+        suffix="%（相对尺寸）"
         min={1}
         max={25}
         step={1}
@@ -121,7 +121,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Range
-          label="frames"
+          label="帧数"
           min={2}
           max={16}
           step={1}
@@ -129,7 +129,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           onChange={(e) => setFrames(Number(e.target.value))}
         />
         <Range
-          label="frame delay"
+          label="帧延迟"
           suffix="ms"
           min={20}
           max={120}
@@ -141,13 +141,13 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="int-edge">edge handling</Label>
+          <Label htmlFor="int-edge">边缘处理</Label>
           <Select id="int-edge" value={edge} onChange={(e) => setEdge(e.target.value as Edge)}>
-            <option value="crop">Crop in — never show empty edges</option>
-            <option value="pad">Pad — let the background show</option>
+            <option value="crop">裁剪——不露出空边</option>
+            <option value="pad">填充——露出背景</option>
           </Select>
         </div>
-        <ColorField id="int-bg" label="background colour" value={bg} onChange={setBg} clearable />
+        <ColorField id="int-bg" label="背景颜色" value={bg} onChange={setBg} clearable />
       </div>
     </>
   );
@@ -159,7 +159,7 @@ export default function IntensifyTool() {
       tool={tool}
       accept="image/png,image/jpeg,image/webp,image/gif"
       defaultName="intensifies"
-      hint="A handful of frames at a short delay with random offsets — the classic [INTENSIFIES] look. Crop mode zooms in slightly so the shake never exposes an empty edge."
+      hint="用少量帧、较短间隔和随机偏移——经典的 [INTENSIFIES] 效果。裁剪模式会略微放大，抖动时不会露出空边。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>

@@ -41,9 +41,10 @@ export default async function OpengraphImage() {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ fontSize: 27, color: "#8e99a8" }}>
-          {`${TOOLS.length} tools · ffmpeg + gifsicle + ImageMagick in WebAssembly · nothing uploaded`}
+          {`${TOOLS.length} tools / ffmpeg + gifsicle + ImageMagick in WebAssembly / nothing uploaded`}
         </div>
-        <div style={{ fontSize: 34, color: "#eceff4", letterSpacing: 2 }}>{SITE.name}</div>
+        {/* 字体只有拉丁字形，这里刻意用 ASCII 品牌名，中文会渲染成豆腐块。 */}
+        <div style={{ fontSize: 34, color: "#eceff4", letterSpacing: 2 }}>gif.tools</div>
       </div>
     </div>,
     { ...size, fonts: [{ name: "VCR OSD Mono", data: vcr, weight: 400, style: "normal" }] },

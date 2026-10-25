@@ -136,10 +136,10 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
   const pct = (a: number, b: number) => `${(a / b) * 100}%`;
 
   const go = () =>
-    run("Cropping", async () => {
-      if (!file) throw new Error("Choose a file first.");
-      if (!src) throw new Error("Still reading the source dimensions — try again in a moment.");
-      if (sel.w < 1 || sel.h < 1) throw new Error("The crop area must be at least 1×1 pixels.");
+    run("正在裁剪", async () => {
+      if (!file) throw new Error("请先选择文件。");
+      if (!src) throw new Error("正在读取源文件尺寸——请稍候再试。");
+      if (sel.w < 1 || sel.h < 1) throw new Error("裁剪区域至少要有 1×1 像素。");
       const ext = outExt(file.name);
       const isVideo = ext === "mp4" || ext === "webm";
       const w = isVideo ? Math.max(2, sel.w - (sel.w % 2)) : sel.w;
@@ -204,12 +204,12 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       ) : null}
 
       <p className="text-ui text-muted-foreground">
-        Drag on the preview to draw a crop area, or type exact pixels below.
+        在预览上拖动以框选裁剪区域，或在下方输入精确像素。
       </p>
 
       {src ? (
         <div>
-          <Label>cropped result</Label>
+          <Label>裁剪结果</Label>
           <div className="flex items-center gap-4 border border-border p-3">
             <div className="checkerboard shrink-0 border border-border">
               <canvas
@@ -218,7 +218,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
                 height={PREVIEW}
                 className="block size-32"
                 role="img"
-                aria-label={`Live preview of the crop: ${sel.w} by ${sel.h} pixels, taken from ${sel.x},${sel.y}`}
+                aria-label={`裁剪实时预览：${sel.w}×${sel.h} 像素，起点 ${sel.x},${sel.y}`}
               />
             </div>
             <p className="text-ui text-muted-foreground min-w-0">
@@ -229,11 +229,11 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
       ) : null}
 
       <div>
-        <Label htmlFor="crop-ratio">aspect ratio</Label>
+        <Label htmlFor="crop-ratio">宽高比</Label>
         <Select id="crop-ratio" value={ratioKey} onChange={(e) => setRatioKey(e.target.value)}>
           {Object.keys(RATIOS).map((k) => (
             <option key={k} value={k}>
-              {k}
+              {k === "free" ? "自由" : k}
             </option>
           ))}
         </Select>
@@ -241,7 +241,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <div>
-          <Label htmlFor="crop-x">x (px)</Label>
+          <Label htmlFor="crop-x">x（px）</Label>
           <Input
             id="crop-x"
             type="number"
@@ -251,7 +251,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         </div>
         <div>
-          <Label htmlFor="crop-y">y (px)</Label>
+          <Label htmlFor="crop-y">y（px）</Label>
           <Input
             id="crop-y"
             type="number"
@@ -261,7 +261,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         </div>
         <div>
-          <Label htmlFor="crop-w">width (px)</Label>
+          <Label htmlFor="crop-w">宽度（px）</Label>
           <Input
             id="crop-w"
             type="number"
@@ -271,7 +271,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
         </div>
         <div>
-          <Label htmlFor="crop-h">height (px)</Label>
+          <Label htmlFor="crop-h">高度（px）</Label>
           <Input
             id="crop-h"
             type="number"
@@ -283,7 +283,7 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
           />
           {ratio ? (
             <p id="crop-h-hint" className="text-label text-muted-foreground mt-1">
-              Set by the {ratioKey} ratio.
+              由 {ratioKey} 比例决定。
             </p>
           ) : null}
         </div>
@@ -291,10 +291,10 @@ function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) 
 
       <p className="text-ui text-muted-foreground" role="status" aria-live="polite">
         {src
-          ? `Source ${src.w}×${src.h} → crop ${sel.w}×${sel.h} at ${sel.x},${sel.y}`
+          ? `源 ${src.w}×${src.h} → 裁剪 ${sel.w}×${sel.h}，起点 ${sel.x},${sel.y}`
           : failed
             ? NO_PREVIEW
-            : "Choose a file to read its dimensions."}
+            : "选择一个文件以读取尺寸。"}
       </p>
     </>
   );
@@ -305,7 +305,7 @@ export default function CropTool() {
     <ToolShell
       tool={tool}
       defaultName="cropped"
-      hint="Drag a box over the preview or type the exact pixels. Animated GIFs stay animated."
+      hint="在预览上拖出选框，或输入精确像素。动画 GIF 会保持动画。"
     >
       {(props) => <Body {...props} />}
     </ToolShell>
