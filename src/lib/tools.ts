@@ -205,8 +205,8 @@ export const TOOLS: Tool[] = [
   },
   {
     slug: "optimize",
-    name: "优化",
-    title: "GIF 优化与压缩",
+    name: "GIF 压缩",
+    title: "GIF 压缩",
     description:
       "用 gifsicle 压缩动态 GIF：有损压缩、减色、帧差分，还可以丢帧，并与原图对比体积。",
     blurb: "gifsicle 有损压缩与减色。",

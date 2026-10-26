@@ -94,7 +94,7 @@ async function filesFromDrop(dt: DataTransfer): Promise<File[]> {
 function Body({ file, setBusy, setProgress, setError, publish }: ToolBodyProps) {
   const run = useRun({ setBusy, setError, setProgress });
   const [frames, setFrames] = React.useState<Frame[]>([]);
-  const [delay, setDelay] = React.useState(120);
+  const [delay, setDelay] = React.useState(700);
   const [loop, setLoop] = React.useState(0);
   const [width, setWidth] = React.useState(1340);
   const [fit, setFit] = React.useState<Fit>("contain");
